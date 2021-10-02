@@ -4,22 +4,22 @@ package technology.workhorse.benchmarks;
 //import org.ejml.data.DMatrixRMaj;
 //import org.ejml.dense.row.CommonOps_DDRM;
 
+import jcuda.samples.utils.ImageProvider;
+import jcuda.samples.utils.JavaFXRenderer;
 import org.junit.jupiter.api.Test;
-import org.nd4j.linalg.api.buffer.DataType;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.api.ops.custom.Roll;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.NDArrayIndex;
-import org.nd4j.linalg.indexing.NDArrayIndexAll;
+
 
 import java.util.Arrays;
 
-public class Diffusion {
+public class Diffusion extends ImageProvider {
     static private int[] shape = {1024, 1024};
-    static private int iterations = 5000;
+    static private int iterations = 10000;
     static private int concurrency = 16;
 
-    static int threadCompleteCounter = 0;
+    static private boolean render = true;
+    static private boolean renderEveryFrame = true;
+    static private byte[] image = render ? new byte[shape[0] * shape[1] * 3] : null;
+
     static volatile boolean[] threadCompleteArray = new boolean[concurrency];
     static Object threadSyncLock = new Object();
 
@@ -38,20 +38,6 @@ public class Diffusion {
         }
     }
 
-    public static void initializeGrid(INDArray grid, double setValue, double low, double high) {
-        int xStart = (int) (grid.shape()[0] * low);
-        int xEnd = (int) (grid.shape()[0] * high);
-
-        int yStart = (int) (grid.shape()[1] * low);
-        int yEnd = (int) (grid.shape()[1] * high);
-
-        for (int x = xStart; x < xEnd; x++) {
-            for (int y = yStart; y < yEnd; y++) {
-                grid.put(x, y, setValue);
-            }
-        }
-
-    }
 
     public static void evolve(double[][] current, double[][] target, double dt, double D, int startX, int endX) {
         int xSize = current.length;
@@ -92,8 +78,7 @@ public class Diffusion {
     }
 
 
-
-    public static Thread evolveThread(int threadCount, int threadID, double[][] a, double[][] b, double dt, double D, Object onComplete) {
+    public Thread evolveThread(int threadCount, int threadID, double[][] a, double[][] b, double dt, double D, Object onComplete) {
 
         Thread thread = new Thread(() -> {
 
@@ -134,6 +119,7 @@ public class Diffusion {
                 }
                 if (completeCount == concurrency) { // All threads have finished this pass, notify via map and continue
                     Arrays.fill(threadCompleteArray, false);
+                    if (render) tryRender(current);
                 } else { // Some threads are still working, wait in a hot loop until someone flips the map back to false
                     while (threadCompleteArray[threadID]) ;
                 }
@@ -165,6 +151,10 @@ public class Diffusion {
 
     @Test
     public void threadedSimple() {
+
+        if (render) {
+            new Thread(() -> JavaFXRenderer.launch(this)).start();
+        }
 
 
         double[][] a = new double[shape[0]][shape[1]];
@@ -216,116 +206,14 @@ public class Diffusion {
         return out;
     }
 
-    static public double sumCheck(INDArray grid) {
-        double out = 0;
-        for (int x = 0; x < shape[0]; x++)
-            for (int y = 0; y < shape[1]; y++)
-                out += grid.getDouble(x, y) * (x + y);
-
-        return out;
-    }
-
-    public INDArray createRollMatrix(int shift, int size) {
-        INDArray out = Nd4j.eye(size);
-        shift = shift % size;
-        if (shift < 0) shift = size + shift;
-        out = Nd4j.vstack(out.get(NDArrayIndex.interval(shift, size), NDArrayIndex.all()), out.get(NDArrayIndex.interval(0, shift), NDArrayIndex.all()));
-        return out;
-    }
-
-
-    public static void evolveMatrixMath(INDArray current, INDArray target, INDArray scratch, double dt, double D, int startX, int endX, INDArray rollLeftMultiplier, INDArray rollRightMultiplier) {
-        current.mul(-4, target);
-
-        current.mmul(rollLeftMultiplier, scratch);
-        target.add(scratch, target);
-        current.mmul(rollRightMultiplier, scratch);
-        target.add(scratch, target);
-        rollLeftMultiplier.mmul(current, scratch);
-        target.add(scratch, target);
-        rollRightMultiplier.mmul(current, scratch);
-        target.add(scratch, target);
-
-        target.mul(dt * D, target);
-        target.add(current, target);
-
-    }
-
-    public static void evolveMatrixRCOps(INDArray current, INDArray target, double dt, double D, int startX, int endX) {
-
-        int xSize = shape[0];
-        int ySize = shape[1];
-
-        int shiftXDown, shiftXUp, shiftYDown, shiftYUp;
-
-        for (int i = startX; i < endX; i++) {
-            if (i == 0)
-                shiftXDown = xSize - 1;
-            else
-                shiftXDown = i - 1;
-            if (i == xSize - 1)
-                shiftXUp = 0;
-            else
-                shiftXUp = i + 1;
-
-            for (int j = 0; j < ySize; j++) {
-
-                if (j == 0)
-                    shiftYDown = ySize - 1;
-                else
-                    shiftYDown = j - 1;
-                if (j == ySize - 1)
-                    shiftYUp = 0;
-                else
-                    shiftYUp = j + 1;
-
-                target.put(i, j, (current.getDouble(i, j) * -4.0 +
-                        current.getDouble(shiftXDown, j) +
-                        current.getDouble(shiftXUp, j) +
-                        current.getDouble(i, shiftYDown) +
-                        current.getDouble(i, shiftYUp)) * D * dt + current.getDouble(i, j));
-
-            }
-        }
-    }
-
-
-    @Test
-    public void nd4JMatrixOps() {
-        Nd4j.setDefaultDataTypes(DataType.DOUBLE, DataType.DOUBLE);
-
-        INDArray a = Nd4j.zeros(DataType.DOUBLE, shape[0], shape[1]);
-        INDArray b = Nd4j.zeros(DataType.DOUBLE, shape[0], shape[1]);
-
-        INDArray scratch = Nd4j.zeros(DataType.DOUBLE, shape[0], shape[1]);
-
-        INDArray rollLeftMultiplier = createRollMatrix(-1, shape[0]);
-        INDArray rollRightMultiplier = createRollMatrix(1, shape[0]);
-
-        initializeGrid(a, 1, .4, .5);
-
-        INDArray current = a;
-        INDArray next = b;
-        INDArray swap;
-
-        long startTime = System.currentTimeMillis();
-        for (int i = 0; i < iterations; i++) {
-            evolveMatrixRCOps(current, next, .2, 1, 0, shape[0]);
-            swap = current;
-            current = next;
-            next = swap;
-        }
-        System.out.println("Simple:" + (System.currentTimeMillis() - startTime) / 1000.0);
-        System.out.println("Sum check:" + sumCheck(current));
-        synchronized (Thread.currentThread()) {
-            Thread.currentThread().notify();
-        }
-
-    }
-
 
     @Test
     public void simple() {
+
+        if (render) {
+            new Thread(() -> JavaFXRenderer.launch(this)).start();
+        }
+
 
         double[][] a = new double[shape[0]][shape[1]];
         double[][] b = new double[shape[0]][shape[1]];
@@ -341,13 +229,43 @@ public class Diffusion {
             swap = current;
             current = next;
             next = swap;
-
+            if (render) tryRender(current);
         }
         System.out.println("Simple:" + (System.currentTimeMillis() - startTime) / 1000.0);
         System.out.println("Sum check:" + sumCheck(current));
-        synchronized (Thread.currentThread()) {
-            Thread.currentThread().notify();
+
+
+    }
+
+    private void tryRender(double[][] current) {
+
+        if ( (renderEveryFrame || isRenderReady()) && !isTerminated()) {
+
+            int pixel = 0;
+            for (double[] row : current) {
+                for (double d : row) {
+                    image[pixel] = (byte) (d * 255);
+                    image[pixel + 1] = (byte) (d * d * 255);
+                    image[pixel + 2] = (byte) (d * d * d * 255);
+                    pixel += 3;
+                }
+            }
+            boolean success = false;
+            do {
+                success = renderNow();
+            }
+            while (!success && renderEveryFrame && !isTerminated() );
         }
+    }
+
+    @Override
+    public int[] getDimensions() {
+        return shape;
+    }
+
+    @Override
+    public byte[] getImage() {
+        return image;
     }
 
 

@@ -42,6 +42,7 @@ public class JCudaSamplesUtils
      * the name of the resulting PTX file
      * 
      * @param cuFileName The CUDA file name
+     * @param s
      * @return The PTX file name
      * @throws CudaException If an error occurs - i.e. when the input file
      * does not exist, or the NVCC call caused an error.
@@ -147,7 +148,7 @@ public class JCudaSamplesUtils
         {
             Process process = Runtime.getRuntime().exec(command);
 
-            String errorMessage = 
+            String errorMessage =
                 new String(toByteArray(process.getErrorStream()));
             String outputMessage =
                 new String(toByteArray(process.getInputStream()));

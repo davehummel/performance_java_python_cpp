@@ -63,7 +63,7 @@ public class Julia {
 
     private double[][] buildCoordsPerf(int desiredWidth, double x1, double x2, double y1, double y2) {
         double out[][] = new double[desiredWidth*desiredWidth][2];
-        // Redesigned because the python example exhibits poor floating point error accumulation
+        // Redesigned because the python book example exhibits poor floating point error accumulation
 
         int n = 0;
         for (double i = 0; i < desiredWidth; i++) {

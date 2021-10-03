@@ -245,8 +245,8 @@ public class Diffusion extends ImageProvider {
             for (double[] row : current) {
                 for (double d : row) {
                     image[pixel] = (byte) (d * 255);
-                    image[pixel + 1] = (byte) (d * d * 255);
-                    image[pixel + 2] = (byte) (d * d * d * 255);
+                    image[pixel + 1] = (byte) (d*d* 255);
+                    image[pixel + 2] = (byte) (d*d*d* 255);
                     pixel += 3;
                 }
             }

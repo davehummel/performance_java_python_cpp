@@ -189,9 +189,9 @@ public class JCudaDiffusion {
 
             }
 
-//          cuCtxSynchronize();
+         cuCtxSynchronize();
         }
-        cuCtxSynchronize();
+
         cuMemcpyDtoH(Pointer.to(gridB), iterations % 2 == 0 ? deviceGridB : deviceGridA,
                 numElements * Sizeof.DOUBLE);
         System.out.println("GPU (external time):" + (System.currentTimeMillis() - startTime) / 1000.0);
@@ -200,14 +200,12 @@ public class JCudaDiffusion {
         // Allocate host output memory and copy the device output
         // to the host.
 
-        cuMemcpyDtoH(Pointer.to(gridB), iterations % 2 == 0 ? deviceGridA : deviceGridB,
-                numElements * Sizeof.DOUBLE);
-
         System.out.println("Sum check A:" + sumCheck(gridB, width));
 
         // Clean up.
         cuMemFree(deviceGridA);
         cuMemFree(deviceGridB);
+        cuMemFree(deviceDelta);
 
         if (render){
             imageProvider.terminate();

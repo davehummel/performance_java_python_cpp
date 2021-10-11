@@ -1,0 +1,151 @@
+_ZN6cudapy8__main__15calculate_z$241Ex5ArrayI10complex128Li1E1C7mutable7alignedE10complex1285ArrayItLi1E1C7mutable7alignedE (int64, array(complex128, 1d, C), complex128, array(uint16, 1d, C))
+--------------------------------------------------------------------------------
+# File: C:\dev\performance_java_python_cpp\pythonBenchmarks\cython\julia\julia1_numba_cuda.py
+# --- LINE 15 --- 
+
+@cuda.jit
+
+# --- LINE 16 --- 
+
+def calculate_z(maxiter, zs, c, output):
+
+    # --- LINE 17 --- 
+
+    """Calculate output list using Julia update rule"""
+
+# --- LINE 18 --- 
+
+
+
+    # --- LINE 19 --- 
+    # label 0
+    #   maxiter = arg(0, name=maxiter)  :: int64
+    #   zs = arg(1, name=zs)  :: array(complex128, 1d, C)
+    #   c = arg(2, name=c)  :: complex128
+    #   output = arg(3, name=output)  :: array(uint16, 1d, C)
+    #   $2load_global.0 = global(cuda: <module 'numba.cuda' from 'C:\\dev\\performance_java_python_cpp\\pythonBenchmarks\\venv\\lib\\site-packages\\numba\\cuda\\__init__.py'>)  :: Module(<module 'numba.cuda' from 'C:\\dev\\performance_java_python_cpp\\pythonBenchmarks\\venv\\lib\\site-packages\\numba\\cuda\\__init__.py'>)
+    #   $4load_attr.1 = getattr(value=$2load_global.0, attr=threadIdx)  :: Dim3
+    #   del $2load_global.0
+    #   $6load_attr.2 = getattr(value=$4load_attr.1, attr=x)  :: int32
+    #   del $4load_attr.1
+    #   $8load_global.3 = global(cuda: <module 'numba.cuda' from 'C:\\dev\\performance_java_python_cpp\\pythonBenchmarks\\venv\\lib\\site-packages\\numba\\cuda\\__init__.py'>)  :: Module(<module 'numba.cuda' from 'C:\\dev\\performance_java_python_cpp\\pythonBenchmarks\\venv\\lib\\site-packages\\numba\\cuda\\__init__.py'>)
+    #   $10load_attr.4 = getattr(value=$8load_global.3, attr=blockIdx)  :: Dim3
+    #   del $8load_global.3
+    #   $12load_attr.5 = getattr(value=$10load_attr.4, attr=x)  :: int32
+    #   del $10load_attr.4
+    #   $14load_global.6 = global(cuda: <module 'numba.cuda' from 'C:\\dev\\performance_java_python_cpp\\pythonBenchmarks\\venv\\lib\\site-packages\\numba\\cuda\\__init__.py'>)  :: Module(<module 'numba.cuda' from 'C:\\dev\\performance_java_python_cpp\\pythonBenchmarks\\venv\\lib\\site-packages\\numba\\cuda\\__init__.py'>)
+    #   $16load_attr.7 = getattr(value=$14load_global.6, attr=blockDim)  :: Dim3
+    #   del $14load_global.6
+    #   $18load_attr.8 = getattr(value=$16load_attr.7, attr=x)  :: int32
+    #   del $16load_attr.7
+    #   $20binary_multiply.9 = $12load_attr.5 * $18load_attr.8  :: int64
+    #   del $18load_attr.8
+    #   del $12load_attr.5
+    #   i = $6load_attr.2 + $20binary_multiply.9  :: int64
+    #   del $6load_attr.2
+    #   del $20binary_multiply.9
+
+    i = cuda.threadIdx.x + cuda.blockIdx.x * cuda.blockDim.x
+
+# --- LINE 20 --- 
+
+
+
+    # --- LINE 21 --- 
+    #   n = const(int, 0)  :: Literal[int](0)
+
+    n = 0
+
+    # --- LINE 22 --- 
+    #   z = getitem(value=zs, index=i, fn=<built-in function getitem>)  :: complex128
+    #   del zs
+
+    z = zs[i]
+
+# --- LINE 23 --- 
+
+
+
+    # --- LINE 24 --- 
+    #   jump 38
+    # label 38
+    #   n.2 = phi(incoming_values=[Var(n, julia1_numba_cuda.py:21), Var(n.1, julia1_numba_cuda.py:26)], incoming_blocks=[0, 74])  :: int64
+    #   del n.1
+    #   z.2 = phi(incoming_values=[Var(z, julia1_numba_cuda.py:22), Var(z.1, julia1_numba_cuda.py:25)], incoming_blocks=[0, 74])  :: complex128
+    #   del z.1
+    #   $42compare_op.2 = n.2 < maxiter  :: bool
+    #   bool44 = global(bool: <class 'bool'>)  :: Function(<class 'bool'>)
+    #   $44pred = call bool44($42compare_op.2, func=bool44, args=(Var($42compare_op.2, julia1_numba_cuda.py:24),), kws=(), vararg=None, target=None)  :: (bool,) -> bool
+    #   del bool44
+    #   del $42compare_op.2
+    #   branch $44pred, 46, 96
+    # label 46
+    #   del $44pred
+    #   $48load_attr.1 = getattr(value=z.2, attr=real)  :: float64
+    #   $52load_attr.3 = getattr(value=z.2, attr=real)  :: float64
+    #   $54binary_multiply.4 = $48load_attr.1 * $52load_attr.3  :: float64
+    #   del $52load_attr.3
+    #   del $48load_attr.1
+    #   $58load_attr.6 = getattr(value=z.2, attr=imag)  :: float64
+    #   $62load_attr.8 = getattr(value=z.2, attr=imag)  :: float64
+    #   $64binary_multiply.9 = $58load_attr.6 * $62load_attr.8  :: float64
+    #   del $62load_attr.8
+    #   del $58load_attr.6
+    #   $66binary_add.10 = $54binary_multiply.4 + $64binary_multiply.9  :: float64
+    #   del $64binary_multiply.9
+    #   del $54binary_multiply.4
+    #   $const68.11 = const(int, 4)  :: Literal[int](4)
+    #   $70compare_op.12 = $66binary_add.10 < $const68.11  :: bool
+    #   del $const68.11
+    #   del $66binary_add.10
+    #   bool72 = global(bool: <class 'bool'>)  :: Function(<class 'bool'>)
+    #   $72pred = call bool72($70compare_op.12, func=bool72, args=(Var($70compare_op.12, julia1_numba_cuda.py:24),), kws=(), vararg=None, target=None)  :: (bool,) -> bool
+    #   del bool72
+    #   del $70compare_op.12
+    #   branch $72pred, 74, 96
+
+    while n < maxiter and (z.real * z.real + z.imag * z.imag) < 4:
+
+        # --- LINE 25 --- 
+        # label 74
+        #   del $72pred
+        #   $78binary_multiply.2 = z.2 * z.2  :: complex128
+        #   del z.2
+        #   z.1 = $78binary_multiply.2 + c  :: complex128
+        #   del $78binary_multiply.2
+
+        z = z * z + c
+
+        # --- LINE 26 --- 
+        #   $const88.6 = const(int, 1)  :: Literal[int](1)
+        #   $90inplace_add.7 = inplace_binop(fn=<built-in function iadd>, immutable_fn=<built-in function add>, lhs=n.2, rhs=$const88.6, static_lhs=Undefined, static_rhs=Undefined)  :: int64
+        #   del n.2
+        #   del $const88.6
+        #   n.1 = $90inplace_add.7  :: int64
+        #   del $90inplace_add.7
+        #   jump 38
+
+        n += 1
+
+    # --- LINE 27 --- 
+    # label 96
+    #   del z.2
+    #   del z
+    #   del n
+    #   del maxiter
+    #   del c
+    #   del $72pred
+    #   del $44pred
+    #   output[i] = n.2  :: (array(uint16, 1d, C), int64, int64) -> none
+    #   del output
+    #   del n.2
+    #   del i
+    #   $const104.3 = const(NoneType, None)  :: none
+    #   $106return_value.4 = cast(value=$const104.3)  :: none
+    #   del $const104.3
+    #   return $106return_value.4
+
+    output[i] = n
+
+
+================================================================================

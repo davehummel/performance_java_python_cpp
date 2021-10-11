@@ -2033,13 +2033,13 @@ static int __Pyx_ValidateAndInit_memviewslice(
 /* ObjectToMemviewSlice.proto */
 static CYTHON_INLINE __Pyx_memviewslice __Pyx_PyObject_to_MemoryviewSlice_ds___pyx_t_double_complex(PyObject *, int writable_flag);
 
+/* FromPy.proto */
+static __pyx_t_double_complex __Pyx_PyComplex_As___pyx_t_double_complex(PyObject*);
+
 /* ToPy.proto */
 #define __pyx_PyComplex_FromComplex(z)\
         PyComplex_FromDoubles((double)__Pyx_CREAL(z),\
                               (double)__Pyx_CIMAG(z))
-
-/* FromPy.proto */
-static __pyx_t_double_complex __Pyx_PyComplex_As___pyx_t_double_complex(PyObject*);
 
 /* MemviewDtypeToObject.proto */
 static CYTHON_INLINE PyObject *__pyx_memview_get___pyx_t_double_complex(const char *itemp);
@@ -2434,7 +2434,7 @@ static PyObject *__pyx_n_s_unpack;
 static PyObject *__pyx_n_s_update;
 static PyObject *__pyx_n_s_z;
 static PyObject *__pyx_n_s_zs;
-static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_maxiter, __Pyx_memviewslice __pyx_v_zs, __Pyx_memviewslice __pyx_v_cs); /* proto */
+static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_maxiter, __Pyx_memviewslice __pyx_v_zs, __pyx_t_double_complex __pyx_v_cs); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __pyx_array_obj *__pyx_v_self, PyObject *__pyx_v_shape, Py_ssize_t __pyx_v_itemsize, PyObject *__pyx_v_format, PyObject *__pyx_v_mode, int __pyx_v_allocate_buffer); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(struct __pyx_array_obj *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(struct __pyx_array_obj *__pyx_v_self); /* proto */
@@ -2519,7 +2519,7 @@ static PyObject *__pyx_codeobj__29;
 /* "cythonfn.pyx":6
  * cimport numpy as np
  * 
- * def calculate_z(int maxiter, double complex[:] zs, double complex[:] cs):             # <<<<<<<<<<<<<<
+ * def calculate_z(int maxiter, double complex[:] zs, double complex cs):             # <<<<<<<<<<<<<<
  *     """Calculate output list using Julia update rule"""
  *     cdef unsigned int i, length
  */
@@ -2531,7 +2531,7 @@ static PyMethodDef __pyx_mdef_8cythonfn_1calculate_z = {"calculate_z", (PyCFunct
 static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_maxiter;
   __Pyx_memviewslice __pyx_v_zs = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_cs = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __pyx_t_double_complex __pyx_v_cs;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -2584,7 +2584,7 @@ static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject 
     }
     __pyx_v_maxiter = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_maxiter == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 6, __pyx_L3_error)
     __pyx_v_zs = __Pyx_PyObject_to_MemoryviewSlice_ds___pyx_t_double_complex(values[1], PyBUF_WRITABLE); if (unlikely(!__pyx_v_zs.memview)) __PYX_ERR(0, 6, __pyx_L3_error)
-    __pyx_v_cs = __Pyx_PyObject_to_MemoryviewSlice_ds___pyx_t_double_complex(values[2], PyBUF_WRITABLE); if (unlikely(!__pyx_v_cs.memview)) __PYX_ERR(0, 6, __pyx_L3_error)
+    __pyx_v_cs = __Pyx_PyComplex_As___pyx_t_double_complex(values[2]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 6, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
@@ -2601,11 +2601,10 @@ static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject 
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_maxiter, __Pyx_memviewslice __pyx_v_zs, __Pyx_memviewslice __pyx_v_cs) {
+static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_maxiter, __Pyx_memviewslice __pyx_v_zs, __pyx_t_double_complex __pyx_v_cs) {
   unsigned int __pyx_v_i;
   CYTHON_UNUSED unsigned int __pyx_v_length;
   __pyx_t_double_complex __pyx_v_z;
-  __pyx_t_double_complex __pyx_v_c;
   __Pyx_memviewslice __pyx_v_output = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -2628,7 +2627,7 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
 
   /* "cythonfn.pyx":10
  *     cdef unsigned int i, length
- *     cdef double complex z, c
+ *     cdef double complex z
  *     cdef int[:] output = np.empty(len(zs), dtype=np.int32)             # <<<<<<<<<<<<<<
  *     length = len(zs)
  *     with nogil, parallel():
@@ -2667,7 +2666,7 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
   __pyx_t_7.data = NULL;
 
   /* "cythonfn.pyx":11
- *     cdef double complex z, c
+ *     cdef double complex z
  *     cdef int[:] output = np.empty(len(zs), dtype=np.int32)
  *     length = len(zs)             # <<<<<<<<<<<<<<
  *     with nogil, parallel():
@@ -2707,7 +2706,7 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
  *     with nogil, parallel():
  *         for i in prange(length, schedule="guided"):             # <<<<<<<<<<<<<<
  *             z = zs[i]
- *             c = cs[i]
+ * 
  */
                 __pyx_t_8 = __pyx_v_length;
                 if ((1 == 0)) abort();
@@ -2716,7 +2715,7 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
                     if (__pyx_t_10 > 0)
                     {
                         #ifdef _OPENMP
-                        #pragma omp for lastprivate(__pyx_v_c) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_z) schedule(guided)
+                        #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_z) schedule(guided)
                         #endif /* _OPENMP */
                         for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_10; __pyx_t_9++){
                             {
@@ -2726,37 +2725,27 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
  *     with nogil, parallel():
  *         for i in prange(length, schedule="guided"):
  *             z = zs[i]             # <<<<<<<<<<<<<<
- *             c = cs[i]
+ * 
  *             output[i] = 0
  */
                                 __pyx_t_3 = __pyx_v_i;
                                 __pyx_v_z = (*((__pyx_t_double_complex *) ( /* dim=0 */ (__pyx_v_zs.data + __pyx_t_3 * __pyx_v_zs.strides[0]) )));
 
-                                /* "cythonfn.pyx":15
- *         for i in prange(length, schedule="guided"):
- *             z = zs[i]
- *             c = cs[i]             # <<<<<<<<<<<<<<
- *             output[i] = 0
- *             while output[i] < maxiter and (z.real * z.real + z.imag * z.imag) < 4:
- */
-                                __pyx_t_3 = __pyx_v_i;
-                                __pyx_v_c = (*((__pyx_t_double_complex *) ( /* dim=0 */ (__pyx_v_cs.data + __pyx_t_3 * __pyx_v_cs.strides[0]) )));
-
                                 /* "cythonfn.pyx":16
  *             z = zs[i]
- *             c = cs[i]
+ * 
  *             output[i] = 0             # <<<<<<<<<<<<<<
  *             while output[i] < maxiter and (z.real * z.real + z.imag * z.imag) < 4:
- *                 z = z * z + c
+ *                 z = z * z + cs
  */
                                 __pyx_t_3 = __pyx_v_i;
                                 *((int *) ( /* dim=0 */ (__pyx_v_output.data + __pyx_t_3 * __pyx_v_output.strides[0]) )) = 0;
 
                                 /* "cythonfn.pyx":17
- *             c = cs[i]
+ * 
  *             output[i] = 0
  *             while output[i] < maxiter and (z.real * z.real + z.imag * z.imag) < 4:             # <<<<<<<<<<<<<<
- *                 z = z * z + c
+ *                 z = z * z + cs
  *                 output[i] += 1
  */
                                 while (1) {
@@ -2775,15 +2764,15 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
                                   /* "cythonfn.pyx":18
  *             output[i] = 0
  *             while output[i] < maxiter and (z.real * z.real + z.imag * z.imag) < 4:
- *                 z = z * z + c             # <<<<<<<<<<<<<<
+ *                 z = z * z + cs             # <<<<<<<<<<<<<<
  *                 output[i] += 1
  *     return output
  */
-                                  __pyx_v_z = __Pyx_c_sum_double(__Pyx_c_prod_double(__pyx_v_z, __pyx_v_z), __pyx_v_c);
+                                  __pyx_v_z = __Pyx_c_sum_double(__Pyx_c_prod_double(__pyx_v_z, __pyx_v_z), __pyx_v_cs);
 
                                   /* "cythonfn.pyx":19
  *             while output[i] < maxiter and (z.real * z.real + z.imag * z.imag) < 4:
- *                 z = z * z + c
+ *                 z = z * z + cs
  *                 output[i] += 1             # <<<<<<<<<<<<<<
  *     return output
  */
@@ -2824,7 +2813,7 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
   }
 
   /* "cythonfn.pyx":20
- *                 z = z * z + c
+ *                 z = z * z + cs
  *                 output[i] += 1
  *     return output             # <<<<<<<<<<<<<<
  */
@@ -2838,7 +2827,7 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
   /* "cythonfn.pyx":6
  * cimport numpy as np
  * 
- * def calculate_z(int maxiter, double complex[:] zs, double complex[:] cs):             # <<<<<<<<<<<<<<
+ * def calculate_z(int maxiter, double complex[:] zs, double complex cs):             # <<<<<<<<<<<<<<
  *     """Calculate output list using Julia update rule"""
  *     cdef unsigned int i, length
  */
@@ -2856,7 +2845,6 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
   __pyx_L0:;
   __PYX_XDEC_MEMVIEW(&__pyx_v_output, 1);
   __PYX_XDEC_MEMVIEW(&__pyx_v_zs, 1);
-  __PYX_XDEC_MEMVIEW(&__pyx_v_cs, 1);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -18000,14 +17988,14 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "cythonfn.pyx":6
  * cimport numpy as np
  * 
- * def calculate_z(int maxiter, double complex[:] zs, double complex[:] cs):             # <<<<<<<<<<<<<<
+ * def calculate_z(int maxiter, double complex[:] zs, double complex cs):             # <<<<<<<<<<<<<<
  *     """Calculate output list using Julia update rule"""
  *     cdef unsigned int i, length
  */
-  __pyx_tuple__21 = PyTuple_Pack(8, __pyx_n_s_maxiter, __pyx_n_s_zs, __pyx_n_s_cs, __pyx_n_s_i, __pyx_n_s_length, __pyx_n_s_z, __pyx_n_s_c, __pyx_n_s_output); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __pyx_tuple__21 = PyTuple_Pack(7, __pyx_n_s_maxiter, __pyx_n_s_zs, __pyx_n_s_cs, __pyx_n_s_i, __pyx_n_s_length, __pyx_n_s_z, __pyx_n_s_output); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__21);
   __Pyx_GIVEREF(__pyx_tuple__21);
-  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cythonfn_pyx, __pyx_n_s_calculate_z, 6, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(3, 0, 7, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cythonfn_pyx, __pyx_n_s_calculate_z, 6, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 6, __pyx_L1_error)
 
   /* "View.MemoryView":286
  *         return self.name
@@ -18492,7 +18480,7 @@ if (!__Pyx_RefNanny) {
   /* "cythonfn.pyx":6
  * cimport numpy as np
  * 
- * def calculate_z(int maxiter, double complex[:] zs, double complex[:] cs):             # <<<<<<<<<<<<<<
+ * def calculate_z(int maxiter, double complex[:] zs, double complex cs):             # <<<<<<<<<<<<<<
  *     """Calculate output list using Julia update rule"""
  *     cdef unsigned int i, length
  */

@@ -307,7 +307,7 @@ body.cython { font-family: courier; font-size: 12; }
   <span class='pyx_macro_api'>__Pyx_DECREF</span>(__pyx_t_1); __pyx_t_1 = 0;
 </pre><pre class="cython line score-0">&#xA0;<span class="">02</span>: cimport numpy as np</pre>
 <pre class="cython line score-0">&#xA0;<span class="">03</span>: </pre>
-<pre class="cython line score-61" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">04</span>: def calculate_z(int maxiter, double complex[:] zs, double complex[:] cs):</pre>
+<pre class="cython line score-61" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">04</span>: def calculate_z(int maxiter, double complex[:] zs,  double complex cs):</pre>
 <pre class='cython code score-61 '>/* Python wrapper */
 static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
 static char __pyx_doc_8cythonfn_calculate_z[] = "Calculate output list using Julia update rule";
@@ -315,7 +315,7 @@ static PyMethodDef __pyx_mdef_8cythonfn_1calculate_z = {"calculate_z", (PyCFunct
 static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_maxiter;
   __Pyx_memviewslice __pyx_v_zs = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_cs = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __pyx_t_double_complex __pyx_v_cs;
   PyObject *__pyx_r = 0;
   <span class='refnanny'>__Pyx_RefNannyDeclarations</span>
   <span class='refnanny'>__Pyx_RefNannySetupContext</span>("calculate_z (wrapper)", 0);
@@ -365,7 +365,7 @@ static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject 
     }
     __pyx_v_maxiter = <span class='pyx_c_api'>__Pyx_PyInt_As_int</span>(values[0]); if (unlikely((__pyx_v_maxiter == (int)-1) &amp;&amp; <span class='py_c_api'>PyErr_Occurred</span>())) <span class='error_goto'>__PYX_ERR(0, 4, __pyx_L3_error)</span>
     __pyx_v_zs = <span class='pyx_c_api'>__Pyx_PyObject_to_MemoryviewSlice_ds___pyx_t_double_complex</span>(values[1], PyBUF_WRITABLE);<span class='error_goto'> if (unlikely(!__pyx_v_zs.memview)) __PYX_ERR(0, 4, __pyx_L3_error)</span>
-    __pyx_v_cs = <span class='pyx_c_api'>__Pyx_PyObject_to_MemoryviewSlice_ds___pyx_t_double_complex</span>(values[2], PyBUF_WRITABLE);<span class='error_goto'> if (unlikely(!__pyx_v_cs.memview)) __PYX_ERR(0, 4, __pyx_L3_error)</span>
+    __pyx_v_cs = <span class='pyx_c_api'>__Pyx_PyComplex_As___pyx_t_double_complex</span>(values[2]);<span class='error_goto'> if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 4, __pyx_L3_error)</span>
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
@@ -385,11 +385,10 @@ static PyObject *__pyx_pw_8cythonfn_1calculate_z(PyObject *__pyx_self, PyObject 
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_maxiter, __Pyx_memviewslice __pyx_v_zs, __Pyx_memviewslice __pyx_v_cs) {
+static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_maxiter, __Pyx_memviewslice __pyx_v_zs, __pyx_t_double_complex __pyx_v_cs) {
   unsigned int __pyx_v_i;
   unsigned int __pyx_v_n;
   __pyx_t_double_complex __pyx_v_z;
-  __pyx_t_double_complex __pyx_v_c;
   __Pyx_memviewslice __pyx_v_output = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_r = NULL;
   <span class='refnanny'>__Pyx_RefNannyDeclarations</span>
@@ -408,13 +407,12 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
   __pyx_L0:;
   __PYX_XDEC_MEMVIEW(&amp;__pyx_v_output, 1);
   __PYX_XDEC_MEMVIEW(&amp;__pyx_v_zs, 1);
-  __PYX_XDEC_MEMVIEW(&amp;__pyx_v_cs, 1);
   <span class='refnanny'>__Pyx_XGIVEREF</span>(__pyx_r);
   <span class='refnanny'>__Pyx_RefNannyFinishContext</span>();
   return __pyx_r;
 }
 /* … */
-  __pyx_tuple__21 = <span class='py_c_api'>PyTuple_Pack</span>(8, __pyx_n_s_maxiter, __pyx_n_s_zs, __pyx_n_s_cs, __pyx_n_s_i, __pyx_n_s_n, __pyx_n_s_z, __pyx_n_s_c, __pyx_n_s_output);<span class='error_goto'> if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 4, __pyx_L1_error)</span>
+  __pyx_tuple__21 = <span class='py_c_api'>PyTuple_Pack</span>(7, __pyx_n_s_maxiter, __pyx_n_s_zs, __pyx_n_s_cs, __pyx_n_s_i, __pyx_n_s_n, __pyx_n_s_z, __pyx_n_s_output);<span class='error_goto'> if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 4, __pyx_L1_error)</span>
   <span class='refnanny'>__Pyx_GOTREF</span>(__pyx_tuple__21);
   <span class='refnanny'>__Pyx_GIVEREF</span>(__pyx_tuple__21);
 /* … */
@@ -422,10 +420,10 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
   <span class='refnanny'>__Pyx_GOTREF</span>(__pyx_t_1);
   if (<span class='py_c_api'>PyDict_SetItem</span>(__pyx_d, __pyx_n_s_calculate_z, __pyx_t_1) &lt; 0) <span class='error_goto'>__PYX_ERR(0, 4, __pyx_L1_error)</span>
   <span class='pyx_macro_api'>__Pyx_DECREF</span>(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_codeobj__22 = (PyObject*)<span class='pyx_c_api'>__Pyx_PyCode_New</span>(3, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cythonfn_pyx, __pyx_n_s_calculate_z, 4, __pyx_empty_bytes);<span class='error_goto'> if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 4, __pyx_L1_error)</span>
+  __pyx_codeobj__22 = (PyObject*)<span class='pyx_c_api'>__Pyx_PyCode_New</span>(3, 0, 7, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cythonfn_pyx, __pyx_n_s_calculate_z, 4, __pyx_empty_bytes);<span class='error_goto'> if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 4, __pyx_L1_error)</span>
 </pre><pre class="cython line score-0">&#xA0;<span class="">05</span>:     """Calculate output list using Julia update rule"""</pre>
 <pre class="cython line score-0">&#xA0;<span class="">06</span>:     cdef unsigned int i, n</pre>
-<pre class="cython line score-0">&#xA0;<span class="">07</span>:     cdef double complex z, c</pre>
+<pre class="cython line score-0">&#xA0;<span class="">07</span>:     cdef double complex z</pre>
 <pre class="cython line score-36" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">08</span>:     cdef int[:] output = np.empty(len(zs), dtype=np.int32)</pre>
 <pre class='cython code score-36 '>  <span class='pyx_c_api'>__Pyx_GetModuleGlobalName</span>(__pyx_t_1, __pyx_n_s_np);<span class='error_goto'> if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)</span>
   <span class='refnanny'>__Pyx_GOTREF</span>(__pyx_t_1);
@@ -475,16 +473,8 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
       <span class='error_goto'>__PYX_ERR(0, 11, __pyx_L1_error)</span>
     }
     __pyx_v_z = (*((__pyx_t_double_complex *) ( /* dim=0 */ (__pyx_v_zs.data + __pyx_t_10 * __pyx_v_zs.strides[0]) )));
-</pre><pre class="cython line score-2" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">12</span>:         c = cs[i]</pre>
-<pre class='cython code score-2 '>    __pyx_t_10 = __pyx_v_i;
-    __pyx_t_11 = -1;
-    if (unlikely(__pyx_t_10 &gt;= (size_t)__pyx_v_cs.shape[0])) __pyx_t_11 = 0;
-    if (unlikely(__pyx_t_11 != -1)) {
-      <span class='pyx_c_api'>__Pyx_RaiseBufferIndexError</span>(__pyx_t_11);
-      <span class='error_goto'>__PYX_ERR(0, 12, __pyx_L1_error)</span>
-    }
-    __pyx_v_c = (*((__pyx_t_double_complex *) ( /* dim=0 */ (__pyx_v_cs.data + __pyx_t_10 * __pyx_v_cs.strides[0]) )));
-</pre><pre class="cython line score-4" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">13</span>:         while n &lt; maxiter and (z.real * z.real + z.imag * z.imag) &lt; 4:</pre>
+</pre><pre class="cython line score-0">&#xA0;<span class="">12</span>: </pre>
+<pre class="cython line score-4" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">13</span>:         while n &lt; maxiter and (z.real * z.real + z.imag * z.imag) &lt; 4:</pre>
 <pre class='cython code score-4 '>    while (1) {
       __pyx_t_13 = ((__pyx_v_n &lt; __pyx_v_maxiter) != 0);
       if (__pyx_t_13) {
@@ -496,8 +486,8 @@ static PyObject *__pyx_pf_8cythonfn_calculate_z(CYTHON_UNUSED PyObject *__pyx_se
       __pyx_t_12 = __pyx_t_13;
       __pyx_L7_bool_binop_done:;
       if (!__pyx_t_12) break;
-</pre><pre class="cython line score-0" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">14</span>:             z = z * z + c</pre>
-<pre class='cython code score-0 '>      __pyx_v_z = __Pyx_c_sum_double(__Pyx_c_prod_double(__pyx_v_z, __pyx_v_z), __pyx_v_c);
+</pre><pre class="cython line score-0" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">14</span>:             z = z * z + cs</pre>
+<pre class='cython code score-0 '>      __pyx_v_z = __Pyx_c_sum_double(__Pyx_c_prod_double(__pyx_v_z, __pyx_v_z), __pyx_v_cs);
 </pre><pre class="cython line score-0" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">15</span>:             n += 1</pre>
 <pre class='cython code score-0 '>      __pyx_v_n = (__pyx_v_n + 1);
     }

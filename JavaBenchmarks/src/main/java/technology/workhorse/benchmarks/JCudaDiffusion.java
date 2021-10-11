@@ -80,10 +80,10 @@ public class JCudaDiffusion {
         int width = 1024*2;
         int[] shape = {width, width};
         int numElements = width * width;
-        int iterations = 10000;
+        int iterations = 100000;
 
-        boolean render = false;
-        boolean renderEveryFrame = true;
+        boolean render = true;
+        boolean renderEveryFrame = false;
 
         byte[] image = render ? new byte[shape[0] * shape[1] * 3] : null;
         ImageProvider imageProvider = null;

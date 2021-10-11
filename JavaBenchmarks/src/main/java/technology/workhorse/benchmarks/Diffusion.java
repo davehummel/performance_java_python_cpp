@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 
 public class Diffusion extends ImageProvider {
-    static private int[] shape = {1024, 1024};
-    static private int iterations = 10000;
+    static private int[] shape = {1024*4, 1024*4};
+    static private int iterations = 1000;
     static private int concurrency = 16;
 
     static private boolean render = true;

@@ -1,29 +1,33 @@
 """Julia set generator without optional PIL-based image drawing"""
 import numba
+from matplotlib import pyplot as plt
 from numba import jit
 import time
 import numpy as np
 
 # area of complex space to investigate
+from numba import cuda
+
 x1, x2, y1, y2 = -1.8, 1.8, -1.8, 1.8
 c_real, c_imag = -0.62772, -.42193
 
 
-@jit(nopython=True)
-def calculate_z(maxiter, zs, cs, output):
+@cuda.jit
+def calculate_z(maxiter, zs, c, output):
     """Calculate output list using Julia update rule"""
-    for i in range(len(zs)):
-        n = 0
-        z = zs[i]
-        c = cs[i]
-        while n < maxiter and (z.real*z.real + z.imag*z.imag) < 4:
-            z = z * z + c
-            n += 1
-        output[i] = n
-    #return output
+
+    i = cuda.threadIdx.x + cuda.blockIdx.x * cuda.blockDim.x
+
+    n = 0
+    z = zs[i]
+
+    while n < maxiter and (z.real * z.real + z.imag * z.imag) < 4:
+        z = z * z + c
+        n += 1
+    output[i] = n
 
 
-def calc_pure_python(draw_output, desired_width, max_iterations):
+def calc_cuda(desired_width, max_iterations):
     """Create a list of complex co-ordinates (zs) and complex parameters (cs), build Julia set and display"""
     x = []
     for i in range(desired_width):
@@ -37,46 +41,53 @@ def calc_pure_python(draw_output, desired_width, max_iterations):
     # Note that our initial condition is a constant and could easily be removed,
     # we use it to simulate a real-world scenario with several inputs to our function
     zs = []
-    cs = []
+
     for ycoord in y:
         for xcoord in x:
             zs.append(complex(xcoord, ycoord))
-            cs.append(complex(c_real, c_imag))
 
     print("Length of x:", len(x))
     print("Total elements:", len(zs))
     zs2 = np.array(zs, np.complex128)
-    cs2 = np.array(cs, np.complex128)
+    device_input = cuda.to_device(zs2)
+    output = np.zeros_like(zs2, dtype=np.uint16)
+    blockdim = 512
+    griddim = (desired_width * desired_width) // blockdim
     start_time = time.time()
-    output = np.zeros_like(zs2, dtype=np.int32)
-    calculate_z(max_iterations, zs2, cs2, output)
+    device_output = cuda.to_device(output)
+    calculate_z[griddim, blockdim](max_iterations, device_input, complex(c_real, c_imag), device_output)
+    device_output.copy_to_host(output);
     end_time = time.time()
     secs = end_time - start_time
     print("took", secs, "seconds")
 
     print("Doing second run to test warm-up")
     start_time = time.time()
-    output = np.zeros_like(zs2, dtype=np.int32)
-    calculate_z(max_iterations, zs2, cs2, output)
+    device_output = cuda.to_device(output)
+    calculate_z[griddim, blockdim](max_iterations, device_input, complex(c_real, c_imag), device_output)
+    device_output.copy_to_host(output);
     end_time = time.time()
     secs = end_time - start_time
     print("took", secs, "seconds")
 
     print("Doing third run to test warm-up")
     start_time = time.time()
-    output = np.zeros_like(zs2, dtype=np.int32)
-    calculate_z(max_iterations, zs2, cs2, output)
+    device_output = cuda.to_device(output)
+    calculate_z[griddim, blockdim](max_iterations, device_input, complex(c_real, c_imag), device_output)
+    device_output.copy_to_host(output);
     end_time = time.time()
     secs = end_time - start_time
     print("took", secs, "seconds")
 
-    print(calculate_z.inspect_types())
-
     validation_sum = sum(output)
     print("Total sum of elements (for validation):", validation_sum)
+    image = output.reshape(-1, desired_width)
+    plt.imsave(fname="julia_cuda.png", arr=image)
+    with open("julia_cuda_jit_output.txt", "w") as file_out:
+        calculate_z.inspect_types(file_out)
 
 
 # Calculate the Julia set using a pure Python solution with
 # reasonable defaults for a laptop
 # set draw_output to True to use PIL to draw an image
-calc_pure_python(draw_output=False, desired_width=4000, max_iterations=300)
+calc_cuda(desired_width=4000, max_iterations=300)

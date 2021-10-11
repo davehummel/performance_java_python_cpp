@@ -1,18 +1,21 @@
 """Julia set generator without optional PIL-based image drawing"""
-import numba
-from numba import jit
+
+import matplotlib.pyplot as plt
+import matplotlib
+from numba import jit, prange
 import time
 import numpy as np
+
 
 # area of complex space to investigate
 x1, x2, y1, y2 = -1.8, 1.8, -1.8, 1.8
 c_real, c_imag = -0.62772, -.42193
 
 
-@jit(nopython=False)
+@jit(nopython=False,parallel=True)
 def calculate_z(maxiter, zs, c, output):
     """Calculate output list using Julia update rule"""
-    for i in range(len(zs)):
+    for i in prange(len(zs)):
         n = 0
         z = zs[i]
 
@@ -44,7 +47,7 @@ def calc_numba(desired_width, max_iterations):
     print("Length of x:", len(x))
     print("Total elements:", len(zs))
     zs2 = np.array(zs, np.complex128)
-    output = np.zeros_like(zs2, dtype=np.int32)
+    output = np.zeros_like(zs2, dtype=np.int16)
     start_time = time.time()
     calculate_z(max_iterations, zs2, complex(c_real,c_imag), output)
     end_time = time.time()
@@ -67,6 +70,9 @@ def calc_numba(desired_width, max_iterations):
 
     validation_sum = sum(output)
     print("Total sum of elements (for validation):", validation_sum)
+
+    image = output.reshape(-1,desired_width)
+    plt.imsave(fname="julia.png",arr=image)
 
 
 # Calculate the Julia set using a pure Python solution with

@@ -12,8 +12,8 @@ import java.util.function.ToIntFunction;
 
 public class Julia extends ImageProvider {
 
-    private final int desiredWidth = 6000;
-    private final int maxIterations = 400;
+    private final int desiredWidth = 4000;
+    private final int maxIterations = 300;
     private final int parrallelism = 16; // Ignored, auto set to CPU thread count, need to setup customer threadpool ...
     private final int[] dimensions = new int[]{desiredWidth, desiredWidth};
 
@@ -94,9 +94,10 @@ public class Julia extends ImageProvider {
 
         int n = 0;
         for (double i = 0; i < desiredWidth; i++) {
-            double x = (x1 * desiredWidth + (x2 - x1) * i) / desiredWidth;
+            double y = (y1 * desiredWidth + (y2 - y1) * i) / desiredWidth;
             for (int j = 0; j < desiredWidth; j++) {
-                double y = (y1 * desiredWidth + (y2 - y1) * j) / desiredWidth;
+                double x = (x1 * desiredWidth + (x2 - x1) * j) / desiredWidth;
+
                 out[n][0] = x;
                 out[n][1] = y;
                 n++;
@@ -199,9 +200,9 @@ public class Julia extends ImageProvider {
         // Redesigned because the python example exhibits poor floating point error accumulation
         List<Complex> zs = new ArrayList<Complex>(desiredWidth*2);
         for (double i = 0; i < desiredWidth; i++) {
-            double x = (x1 * desiredWidth + (x2 - x1) * i) / desiredWidth;
+            double y = (y1 * desiredWidth + (y2 - y1) * i) / desiredWidth;
             for (int j = 0; j < desiredWidth; j++) {
-                double y = (y1 * desiredWidth + (y2 - y1) * j) / desiredWidth;
+                double x = (x1 * desiredWidth + (x2 - x1) * j) / desiredWidth;
                 zs.add(new Complex(x, y));
             }
         }

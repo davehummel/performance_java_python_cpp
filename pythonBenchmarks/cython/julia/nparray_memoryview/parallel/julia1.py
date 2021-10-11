@@ -23,19 +23,18 @@ def calc_pure_python(desired_width, max_iterations):
     # Note that our initial condition is a constant and could easily be removed,
     # we use it to simulate a real-world scenario with several inputs to our function
     zs = []
-    cs = []
+
     for ycoord in y:
         for xcoord in x:
             zs.append(complex(xcoord, ycoord))
-            cs.append(complex(c_real, c_imag))
 
     zs_np = np.array(zs, np.complex128)
-    cs_np = np.array(cs, np.complex128)
+
 
     print("Length of x:", len(x))
     print("Total elements:", len(zs))
     start_time = time.time()
-    output = cythonfn.calculate_z(max_iterations, zs_np, cs_np)
+    output = cythonfn.calculate_z(max_iterations, zs_np, complex(c_real, c_imag))
     end_time = time.time()
     secs = end_time - start_time
     print(f"Took {secs:0.2f} seconds")
@@ -47,4 +46,4 @@ def calc_pure_python(desired_width, max_iterations):
 # Calculate the Julia set using a pure Python solution with
 # reasonable defaults for a laptop
 # set draw_output to True to use PIL to draw an image
-calc_pure_python(desired_width=6000, max_iterations=400)
+calc_pure_python(desired_width=4000, max_iterations=300)

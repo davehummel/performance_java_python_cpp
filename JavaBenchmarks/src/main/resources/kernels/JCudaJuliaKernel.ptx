@@ -10,12 +10,13 @@
 .target sm_52
 .address_size 64
 
-	// .globl	julia
+	// .globl	_Z5juliaPdS_Pi
+.global .align 1 .b8 _ZN74_INTERNAL_52_tmpxft_000086e4_00000000_11_jcudajuliakernel_cpp1_ii_b5e38ced6thrust6system6detail10sequential3seqE[1];
 
-.visible .entry julia(
-	.param .u64 julia_param_0,
-	.param .u64 julia_param_1,
-	.param .u64 julia_param_2
+.visible .entry _Z5juliaPdS_Pi(
+	.param .u64 _Z5juliaPdS_Pi_param_0,
+	.param .u64 _Z5juliaPdS_Pi_param_1,
+	.param .u64 _Z5juliaPdS_Pi_param_2
 )
 {
 	.reg .pred 	%p<7>;
@@ -25,9 +26,9 @@
 	.reg .b64 	%rd<13>;
 
 
-	ld.param.u64 	%rd4, [julia_param_0];
-	ld.param.u64 	%rd5, [julia_param_1];
-	ld.param.u64 	%rd3, [julia_param_2];
+	ld.param.u64 	%rd4, [_Z5juliaPdS_Pi_param_0];
+	ld.param.u64 	%rd5, [_Z5juliaPdS_Pi_param_1];
+	ld.param.u64 	%rd3, [_Z5juliaPdS_Pi_param_2];
 	mov.u32 	%r6, %ntid.x;
 	mov.u32 	%r7, %ctaid.x;
 	mov.u32 	%r8, %tid.x;

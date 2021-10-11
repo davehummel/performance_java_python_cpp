@@ -28,19 +28,6 @@ import static jcuda.driver.JCudaDriver.*;
 public class JCudaJulia {
 
 
-    public static void initializeGrid(double[] grid, double setValue, double low, double high, int width) {
-        int xStart = (int) (width * low);
-        int xEnd = (int) (width * high);
-
-        int yStart = (int) (width * low);
-        int yEnd = (int) (width * high);
-
-        for (int x = xStart; x < xEnd; x++) {
-            for (int y = yStart; y < yEnd; y++) {
-                grid[x + y * width] = setValue;
-            }
-        }
-    }
 
     /**
      * Entry point of this sample
@@ -78,8 +65,8 @@ public class JCudaJulia {
         CUfunction function = new CUfunction();
         cuModuleGetFunction(function, module, "julia");
 
-        final int desiredWidth = 6000;
-        final int maxIterations = 400;
+        final int desiredWidth = 4000;
+        final int maxIterations = 300;
 
         final int[] dimensions = new int[]{desiredWidth, desiredWidth};
 
@@ -135,8 +122,9 @@ public class JCudaJulia {
                 3 * Sizeof.DOUBLE);
 
 
-        int blockSize = 256;
+        int blockSize = 512;
         int gridSize = (int) Math.ceil((double) desiredWidth * desiredWidth / blockSize);
+
 
         System.out.println("Compute Grid - " + gridSize);
 

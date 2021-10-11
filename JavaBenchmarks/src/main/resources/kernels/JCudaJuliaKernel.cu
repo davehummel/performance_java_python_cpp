@@ -1,5 +1,5 @@
 extern "C"
-
+#include <thrust/complex.h>
 
 
 __global__ void julia(double *complexAdditive,double *complexInputGrid, int *output)

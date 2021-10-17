@@ -11,40 +11,52 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Submission Notes:
+ * @author David Hummel - dmhummel@gmail.com
+ *
+ * Submission Notes: These additional considerations in scale, performance and application were applied:
  * <p>
  * Symbol Expansion: It is assumed that over time the supported symbols may grow (beyond 'A'-'Z').  The MIN_SYMBOL and
- * MAX_SYMBOL class constants may be changed to expand the usable range
+ * MAX_SYMBOL class constants may be changed to expand the usable range.  With thousands of symbols, tree depth may
+ * lead to function recursion that trigger stack overflows. This implementation avoids unbounded function recursion
  * <p>
- * Streaming and Concurrency: This implementation was made to support application to continuous streams of input.
+ * Streaming and Concurrency: This support continuous concurrent streams of input, as is common in real world use-cases.
  * The solution class is broken into two public functions: consumeText(Reader) and getSnapshot()
  * In the test cases, one is called after the other.  However, one or more consumeText() can be invoked on separate
- * threads, and run continuously.  At any time, getSnapshot() may be called and will generate the S-Expression.
- * Validation for errors E1 and E2 are checked in consumeText(), E3-E5 in getSnapshot()
+ * threads, and run continuously. The function will run until the reader source is closed, blocking when data is not yet
+ * available. At any time, getSnapshot() may be called and will generate the S-Expression for the current known tree.
+ * Validation for errors E1,E2 are checked in consumeText(), E3-E5 in getSnapshot()
  * <p>
- * Memory: The solution was designed to process all input as a stream, without needing to render the entire input
- * as a String, or creating any duplicates.  Only the accumulated nodes in Tree and an Array lookup table are
- * permanently in memory.
+ * Memory: The solution was designed to minimize memory footprint by progressively processing input from the Reader.
+ * Only the accumulated of nodes as a Binary Tree and a lookup array of pointers to nodes. Both are bounded to the size
+ * of the symbol set (26 in this case).
+ *
  * <p>
  * Performance: Overall performance is limited by the wait/block cycle for listening to the console input.
- * For potential application to future larger problems and a higher performance streaming input source, this
- * implementation supports parallel stream processing.
+ * For potential application to larger problems, this implementation supports parallel stream processing.
+ * An array based node lookup table is used due to its performance advantage. For example, with ~20k symbols:
+ * Total:0.029274 Consume:0.017369 Snapshot:0.011905 - array
+ * Total:0.040492 Consume:0.025022 Snapshot:0.015470 - map
  * <p>
- * Parallel streams are not enabled as the example using symbols A-Z are too small to benefit.
+ * Parallel streams are disabled as the example using symbols A-Z are too small to benefit.
  * <p>
  * Errors: "If errors are present, print out the first listed error below"
- * This was implemented as if it was intended for the entire input set, not a specific input edge pair.
+ * This was interpreted to apply for the entire input set, not a specific input edge pair.
  * This means the solution waits until all pairs are processed before throwing E3,E4,E5
  */
 
 public class Solution {
 
-
+    /**
+     * Entry point for tests
+     *
+     * @param args Not used
+     * @throws Exception
+     */
     public static void main(String args[]) throws Exception {
         /* Enter your code here. Read input from STDIN. Print output to STDOUT */
 
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        BufferedReader reader = new BufferedReader(testRandomValid(MAX_SYMBOL));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+//        BufferedReader reader = new BufferedReader(testRandomValid(  -1, new Random(2))); // Set seed here to repeat random outcomes
 
         long startTime = System.nanoTime();
         long consumeTime = 0;
@@ -68,13 +80,15 @@ public class Solution {
         }
     }
 
-    public static final char MIN_SYMBOL = 'A', MAX_SYMBOL = 'Z';
+
+    // try MAX_SYMBOL = 20000 with 'testRandomValid()' input above for a large problem example.
+    public static final char MIN_SYMBOL = 'A', MAX_SYMBOL = 'Z' /*20000*/;
     private static final int INPUT_BLOCK_SIZE = "(X,Y) ".length();
 
-    // This is the stateful container that all text processing is consumed into
+    // This is the aggregation container that new input is fed into.  Even at 20000, an array out-performs a hashmap
     private final LinkedNode nodeArray[] = new LinkedNode[MAX_SYMBOL - MIN_SYMBOL + 1];
 
-    // Added to ensure an E3 was never thrown before an E2
+    // State held to ensure an E3 was never thrown before an E2
     private boolean tooManyChildState = false;
 
 
@@ -87,16 +101,56 @@ public class Solution {
      * @throws InputException type E1 and E2
      */
     public void consumeText(Reader reader) throws InputException {
-
-        Stream<String> edgeSourceStream = edgeStringStream(reader);
+        Stream<String> edgeSourceStream = edgeStringStream(reader); // blocking stream based on Reader for input
         edgeSourceStream.map(this.extractPairsFunction()).forEach(this.addPairsFunction());
 
     }
 
+    /**
+     * Generates S-Expression as String the current tree and verifies E3,E4,E5 error states
+     * This function may be called multiple times and concurrently with itself and consumeText()
+     *
+     * @return a String S-Expression Representation
+     */
+    public String getSnapshot() {
+        // Delayed throwing this to ensure all E2 errors can be thrown
+        if (tooManyChildState)
+            throw new InputException(3);
+
+        // This reference can be safely used from a lambda, even with parallel stream execution
+        AtomicReference<LinkedNode> root = new AtomicReference<>();
+
+        synchronized (Solution.this) { // shares syncrhonization with
+            long nodeCount = streamNodes().peek(node -> {
+                if (!node.hasParent()) {
+                    LinkedNode oldRoot = root.getAndSet(node);
+                    if (oldRoot != null)
+                        throw new InputException(4);
+                }
+                node.setExplored(false);
+            }).count();
+
+            if (root.get() == null)
+                throw new InputException(5);
+
+            StringBuilder sb = new StringBuilder();
+
+            int foundCount = explore(root.get(), sb);
+
+            // If there is only one root, but not all nodes are found
+            // there must be a disconnected cycle
+            if (foundCount < nodeCount)
+                throw new InputException(5);
+
+            return sb.toString();
+        }
+    }
+
 
     /**
-     * Returns a mapping function for both validating input text blocks and extracting the edge pairs
-     * as a Character[2]
+     * Returns a mapping function for both validating input stream of Strings and extracting the edge pairs into Character[2]
+     * This is coded to expect 6 character with spaces at the end, or a 5 character block for the end of the stream.
+     * Any other input will trigger an E1 error.
      *
      * @return Mapping Function to from String to Character[2] stream
      */
@@ -123,65 +177,28 @@ public class Solution {
 
     /**
      * Returns a consumer function that adds nodes and edges to the tree within the Solution class.
+     * This function is protected with a synchronized block to allow for concurrent insertions and to pause input
+     * when a snapshot is generating.
      *
      * @return Consumer for Charcter[2] edge pairs
      */
     private Consumer<Character[]> addPairsFunction() {
         return c -> {
-            LinkedNode root = getOrCreateNode(c[0]);
-            LinkedNode child = getOrCreateNode(c[1]);
+            synchronized (Solution.this) {
+                LinkedNode root = getOrCreateNode(c[0]);
+                LinkedNode child = getOrCreateNode(c[1]);
 
-            // Delayed throwing this to ensure all E2 errors can be thrown
-            if (root.addChild(child) == 3)
-                tooManyChildState = true;
-
+                // Delayed throwing this to ensure all E2 errors can be thrown
+                if (root.addChild(child) == 3)
+                    tooManyChildState = true;
+            }
         };
     }
 
 
     /**
-     * Analyzes the current tree captured from input and verifies E3,E4,E5 error states
-     * This function may be called multiple times, even concurrently with itself and consumeText()
-     *
-     * @return a String S-Expression Representation
-     */
-    public String getSnapshot() {
-        // Delayed throwing this to ensure all E2 errors can be thrown
-        if (tooManyChildState)
-            throw new InputException(3);
-
-        // This reference can be safely used from a lambda, even with parallel stream execution
-        AtomicReference<LinkedNode> root = new AtomicReference<>();
-
-        synchronized (this) {
-            long nodeCount = streamNodes().map(node -> {
-                if (!node.hasParent()) {
-                    LinkedNode oldRoot = root.getAndSet(node);
-                    if (oldRoot != null)
-                        throw new InputException(4);
-                }
-                node.setExplored(false);
-                return node;
-            }).count();
-
-            if (root.get() == null)
-                throw new InputException(5);
-
-            StringBuilder sb = new StringBuilder();
-
-            int foundCount = explore(root.get(), sb);
-
-            // If there is only one root, but not all nodes are found
-            // there must be a disconnected cycle
-            if (foundCount < nodeCount)
-                throw new InputException(5);
-
-            return sb.toString();
-        }
-    }
-
-    /**
      * Returns a known node for this id or generates, stores and returns a new node.
+     * This should be called within a synchronized block.
      *
      * @param id node id
      * @return LinkedNode
@@ -192,31 +209,37 @@ public class Solution {
             nodeArray[index] = new LinkedNode(id);
         }
         return nodeArray[index];
+
     }
 
+    /**
+     * Returns a stream of all known nodes.
+     * Should only be called within a synchronized block coordinated with callers of getOrCreateNode
+     *
+     * @return Stream of all LinkedNodes
+     */
     private Stream<LinkedNode> streamNodes() {
         return Arrays.stream(nodeArray).filter(node -> node != null);
     }
 
 
     /**
-     * Node class that manages child unidirectional relationships
+     * Node class that manages parent -> child unidirectional relationships
      * <p>
      * Note:
      * - Validation for duplicate nodes is done in the addChild function.
      * - Identify for hash and comparison is based only on the value of the node and ignores child edges.
-     * </p>
      */
     private class LinkedNode {
 
         private final char value;
-        private LinkedNode leftChild = null, rightChild = null;
+        private LinkedNode lesserChild = null, greaterChild = null;
 
         private boolean hasParent;
         private boolean explored;
 
         /**
-         * Constructs a node with no children but set value.
+         * Constructs a node with no children
          *
          * @param value char value to be set for this node
          */
@@ -227,7 +250,7 @@ public class Solution {
         /**
          * The addChild function attempts to add a new child to this node.
          * It will detect duplicate pairs and throw an E2.
-         * When adding a second child, the child with lower value is always on the left side
+         * When adding a second child that is less than the first, the values are swapped to ensure ordering
          *
          * @param child LinkedNode to add as child
          * @return number of children (3 in the case of an overloaded node)
@@ -235,23 +258,23 @@ public class Solution {
         public int addChild(LinkedNode child) throws InputException {
 
             child.setHasParent();
-            if (leftChild == null) {
-                leftChild = child;
+            if (lesserChild == null) {
+                lesserChild = child;
                 return 1;
-            } else if (rightChild == null) {
-                int compare = leftChild.value - child.value;
+            } else if (greaterChild == null) {
+                int compare = lesserChild.value - child.value;
                 if (compare == 0) { //
                     throw new InputException(2);
                 } else if (compare < 0) {
-                    rightChild = child;
+                    greaterChild = child;
                 } else {
-                    rightChild = leftChild;
-                    leftChild = child;
+                    greaterChild = lesserChild;
+                    lesserChild = child;
                 }
                 return 2;
             } else {
                 // Check for a repeated value, even in a full child scenario
-                if (leftChild.value == child.value || rightChild.value == child.value) {
+                if (lesserChild.value == child.value || greaterChild.value == child.value) {
                     throw new InputException(2);
                 }
                 // You could throw an E3 exception right here
@@ -309,15 +332,15 @@ public class Solution {
         int depth = 0;
         LinkedNode node;
         while (!stack.isEmpty()) {
-            while ((node = stack.remove(0)).leftChild != null) {
+            while ((node = stack.remove(0)).lesserChild != null) {
                 depth++;
                 count++;
-                if (node.rightChild != null) {
-                    stack.add(0, node.rightChild);
+                if (node.greaterChild != null) {
+                    stack.add(0, node.greaterChild);
                     branchDepths.add(0, depth);
                 }
                 exploreVisit(node, sb);
-                stack.add(0, node.leftChild);
+                stack.add(0, node.lesserChild);
             }
             depth++;
             count++;
@@ -347,7 +370,8 @@ public class Solution {
     /**
      * Constructs a blocking stream based on BufferedReader source.
      * Blocks on input stream, emitting number pairs after parsing either a block of 6 characters or, after
-     * the stream closes, the remaining characters.
+     * the stream closes, the remaining characters.  The limitation of core Java 8 libraries that reliably block on
+     * console input made for additional complexity.
      *
      * @param reader
      * @return Stream of Strings
@@ -431,11 +455,11 @@ public class Solution {
 
     // TEST CODE - Input stream sources used for performance and random input testing
 
-    // Massive input set with no duplicate (but guaranteed to have loops)
-    // for performance testing consume process
-    static BufferedReader testHugeRandom() {
-        List<Integer> range1 = randomize(IntStream.rangeClosed(MIN_SYMBOL, MAX_SYMBOL - 1).boxed().collect(Collectors.toList()));
-        List<Integer> range2 = randomize(IntStream.rangeClosed(MIN_SYMBOL + 1, MAX_SYMBOL).boxed().collect(Collectors.toList()));
+    // Massive input set with no duplicate (but guaranteed to have cycles)
+    // for stress testing consume process
+    static BufferedReader testHugeRandom(Random randomSource) {
+        List<Integer> range1 = randomize(IntStream.rangeClosed(MIN_SYMBOL, MAX_SYMBOL - 1).boxed().collect(Collectors.toList()), randomSource);
+        List<Integer> range2 = randomize(IntStream.rangeClosed(MIN_SYMBOL + 1, MAX_SYMBOL).boxed().collect(Collectors.toList()), randomSource);
 
 
         StringBuilder builder = new StringBuilder();
@@ -454,17 +478,17 @@ public class Solution {
         return new BufferedReader(new StringReader(output));
     }
 
-    private static Random randomSource = new Random(1);// This random set should not change between tests
 
-    // Selected random construction to build a valid tree
-    static BufferedReader testRandomValid(int edgeCount) {
+    // Raandom construction to build a valid tree with no cycles
+    static BufferedReader testRandomValid(int edgeCount, Random randomSource) {
+        if (edgeCount <= -1 || edgeCount > MAX_SYMBOL - MIN_SYMBOL)
+            edgeCount = MAX_SYMBOL - MIN_SYMBOL;
         if (edgeCount < 1) edgeCount = 1;
-        if (edgeCount > MAX_SYMBOL - 1)
-            edgeCount = MAX_SYMBOL - 1;
+
 
         List<Integer> range1 = new LinkedList<>();
         range1.add((int) MIN_SYMBOL);
-        List<Integer> range2 = randomize(IntStream.rangeClosed(MIN_SYMBOL + 1, edgeCount).boxed().collect(Collectors.toList()));
+        List<Integer> range2 = randomize(IntStream.rangeClosed(MIN_SYMBOL + 1, MIN_SYMBOL + edgeCount).boxed().collect(Collectors.toList()), randomSource);
 
         StringBuilder builder = new StringBuilder();
 
@@ -489,21 +513,23 @@ public class Solution {
 
         builder.deleteCharAt(builder.length() - 1);
         String output = builder.toString();
+        System.out.println(output);
         return new BufferedReader(new StringReader(output));
     }
 
     /**
      * Test function for shuffling a list
+     *
      * @param list List of integers
      * @return randomized Integer list
      */
-    static List<Integer> randomize(List<Integer> list) {
+    static List<Integer> randomize(List<Integer> list, Random randomSource) {
         List<Integer> output = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
+        while (list.size() > 0) {
             int a = list.remove(randomSource.nextInt(list.size()));
             output.add(a);
         }
-        return list;
+        return output;
     }
 
 

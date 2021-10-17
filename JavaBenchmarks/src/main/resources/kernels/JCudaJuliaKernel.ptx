@@ -11,7 +11,7 @@
 .address_size 64
 
 	// .globl	_Z5juliaPdS_Pi
-.global .align 1 .b8 _ZN74_INTERNAL_52_tmpxft_000086e4_00000000_11_jcudajuliakernel_cpp1_ii_b5e38ced6thrust6system6detail10sequential3seqE[1];
+.global .align 1 .b8 _ZN74_INTERNAL_52_tmpxft_000070d4_00000000_11_jcudajuliakernel_cpp1_ii_b5e38ced6thrust6system6detail10sequential3seqE[1];
 
 .visible .entry _Z5juliaPdS_Pi(
 	.param .u64 _Z5juliaPdS_Pi_param_0,

@@ -12,17 +12,17 @@ import java.util.function.ToIntFunction;
 
 public class Julia extends ImageProvider {
 
-    private final int desiredWidth = 4000;
+    private final int desiredWidth = 2000;
     private final int maxIterations = 300;
     private final int parrallelism = 16; // Ignored, auto set to CPU thread count, need to setup customer threadpool ...
     private final int[] dimensions = new int[]{desiredWidth, desiredWidth};
 
 
-    private double cReal = -0.62772, cImag = -.42193;
+    private double cReal = -0.50, cImag = -.52;
 
-    private double x1 = -1.8, x2 = 1.8, y1 = -1.8, y2 = 1.8;
+    private double x1 = -1.7, x2 = 1.7, y1 = -1.7, y2 = 1.7;
 
-    private final boolean render = false;
+    private final boolean render = true;
 
     private byte[] image = render ? new byte[dimensions[0] * dimensions[1] * 3] : null;
 
@@ -119,6 +119,8 @@ public class Julia extends ImageProvider {
                 z[0] = realPartSqr - imagPartSqr + cReal;
                 n++;
             }
+//            if (n==maxIterations)
+//                n = (int)(25/(Math.min(.01,z[1]*z[0])));
             return n;
         };
         return calculation;

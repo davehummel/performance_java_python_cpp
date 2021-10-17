@@ -70,7 +70,7 @@ public class JCudaJulia {
 
         final int[] dimensions = new int[]{desiredWidth, desiredWidth};
 
-        boolean render = false;
+        boolean render = true;
 
 
         byte[] image = render ? new byte[dimensions[0] * dimensions[1] * 3] : null;

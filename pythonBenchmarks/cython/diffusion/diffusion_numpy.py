@@ -7,10 +7,6 @@ import numpy as np
 from numexpr import evaluate, set_num_threads
 from numpy import copyto, multiply, zeros
 
-import simp
-
-simp.add(1,2)
-
 try:
     profile
 except NameError:

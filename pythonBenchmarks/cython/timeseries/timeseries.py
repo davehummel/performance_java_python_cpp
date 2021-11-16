@@ -21,10 +21,10 @@ def timed_void_fn(fn):
     return measure_time
 
 
-ITEMS_IN_ARRAY = 100_000_000
-BLOCK_SIZE = 1_000_000
+ITEMS_IN_ARRAY = 100_0#00_000
+BLOCK_SIZE = 1_00#0_000
 
-PROCESS_COUNT = 16
+PROCESS_COUNT = 1
 
 
 def explode_symbols(symbols):
@@ -68,22 +68,25 @@ def generate_symbol_prices(start_index: int):
                 out=price_array[start_index:start_index + BLOCK_SIZE])
 
 
-# @timed_void_fn
-# def bulk_forward_fill(start_index: int):
-#     fill_value_map = np.empty(len(SYMBOLS), np.double)
-#     fill_value_map[:] = np.NaN
-#     for i in range(start_index, start_index + BLOCK_SIZE):
-#         symbol_id = symbol_array[i]
-#         if np.isnan(price_array[i]):
-#             price_array[i] = fill_value_map[symbol_id]
-#         else:
-#             fill_value_map[symbol_id] = price_array[i]
-#
-#     return fill_value_map
+@timed_void_fn
+def bulk_forward_fill(start_index: int, block_size:int, symbol_count: int,symbols, prices):
+    fill_value_map = np.empty(symbol_count, np.double)
+    fill_value_map[:] = np.NaN
+    forward_fill_cpython(start_index,start_index+block_size,symbols=symbols,prices = prices,fill_value_map = fill_value_map)
+    return fill_value_map
+
+
+def forward_fill_cpython(start:int, end:int, symbols, prices,fill_value_map):
+    print(f"start = {start} end = {end}")
+    for i in range(start,end):
+        symbol_id = symbols[i]
+        if np.isnan(prices[i]):
+            prices[i] = fill_value_map[symbol_id]
+        else:
+            fill_value_map[symbol_id] = prices[i]
 
 
 @timed_void_fn
-# @nb.jit(nopython=True)
 def boundary_forward_fill(start_index: int, last_value_maps):
     last_value_map = last_value_maps[start_index // BLOCK_SIZE - 1]
     known_fills = np.empty(len(SYMBOLS), bool)
@@ -133,8 +136,10 @@ if __name__ == '__main__':
     print(time.time() - stage_start_time)
     print("Running bulk_forward_fill")
     stage_start_time = time.time()
-    closure = partial(bulk_forward_fill, block_size=BLOCK_SIZE, symbol_count=int(len(SYMBOLS)), symbol_array=symbol_array,
-                      price_array=price_array)
+    # closure = partial(bulk_forward_fill_cpython, block_size=BLOCK_SIZE, symbol_count=int(len(SYMBOLS)), symbol_array=symbol_array,
+    #                   price_array=price_array)
+    closure = partial(bulk_forward_fill, block_size=BLOCK_SIZE, symbol_count=int(len(SYMBOLS)), symbols=symbol_array,
+                      prices=price_array)
     bulk_out = worker_pool.map(closure, range(0, ITEMS_IN_ARRAY, BLOCK_SIZE))
     last_value_maps = [p[0] for p in bulk_out]
     print(time.time() - stage_start_time)
@@ -145,4 +150,7 @@ if __name__ == '__main__':
     print(time.time() - stage_start_time)
     print(f"total time = {time.time() - start_time} seconds")
 
+    print(price_array)
+
+# You can review memory usage by pausing the app here with an input request
     # input("Press a key to exit...")

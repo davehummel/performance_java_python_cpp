@@ -1,4 +1,4 @@
-#cython: boundscheck=False
+#cython_examples: boundscheck=False
 def calculate_z(int maxiter, zs, cs):
     """Calculate output list using Julia update rule"""
     cdef unsigned int i, n

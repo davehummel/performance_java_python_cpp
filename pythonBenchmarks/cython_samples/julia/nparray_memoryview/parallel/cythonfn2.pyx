@@ -1,4 +1,4 @@
-#cython: boundscheck=False
+#cython_examples: boundscheck=False
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np

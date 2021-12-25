@@ -1,7 +1,3 @@
-import array
-import itertools
-
-
 class TriCell:
     id = None
 
@@ -27,8 +23,9 @@ class TriCell:
 
 
 class TriGrid:
-    first_cell = None
     grid_store = None
+
+    _seed_count = 0
 
     def __init__(self, height: int):
         if height < 1:
@@ -45,7 +42,7 @@ class TriGrid:
                     cell.a = next_level[cell.x - 1]
                     cell.a.b = cell
                 if cell.x % 2 == 1:
-                    cell.c = self.grid_store[-1][cell.x -1]
+                    cell.c = self.grid_store[-1][cell.x - 1]
                     cell.c.c = cell
             self.grid_store.append(next_level)
 
@@ -58,6 +55,9 @@ class TriGrid:
 
         return header + "\n" + body
 
+    def seed_count(self):
+        return self._seed_count
+
     def get(self, x: int, y: int):
         if x < 0 or y < 0:
             return None
@@ -67,3 +67,27 @@ class TriGrid:
             return None
 
         return self.grid_store[y][x]
+
+    def find_cell_for_id(self, id: int):
+        for row in self.grid_store:
+            for cell in row:
+                if cell.id == id:
+                    return cell
+        return None
+
+    def find_adjacent_ids(self, id: int):
+        adj = {}
+        for row in self.grid_store:
+            for cell in row:
+                if cell.id == id:
+                    if cell.a is not None:
+                        if cell.a.id != id:
+                            adj[cell.a.id] = True
+                    if cell.b is not None:
+                        if cell.b.id != id:
+                            adj[cell.b.id] = True
+                    if cell.c is not None:
+                        if cell.c.id != id:
+                            adj[cell.c.id] = True
+
+        return adj.keys()

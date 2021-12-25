@@ -18,12 +18,21 @@ def seed(count: int, tri_grid: TriGrid):
         return origins
 
     for c in range(count):
-        ry = random.randrange(tri_grid.height)
-        rx = random.randrange(ry * 2 + 1)
+        r = random.randrange((tri_grid.height * 2 - 1) * tri_grid.height // 2)
+        ry = 0
+        rx = 0
+        for ry in range(tri_grid.height):
+            r = r - ry * 2 + 1
+            if r < 0:
+                rx = ry * 2 + 1 + r
+                break
+
         cell = tri_grid.get(rx, ry)
         if cell.id is None:
             cell.id = c
             origins.append(cell)
+
+    tri_grid._seed_count = count
 
     return origins
 
@@ -52,14 +61,12 @@ def grow(origins, tri_grid, iter_limit=0):
                 if side.id is None:
                     options.append(side)
 
-        eval_side(s_cell.c)
         eval_side(s_cell.a)
+        eval_side(s_cell.c)
         eval_side(s_cell.b)
 
-        r = random.randint(0, 100)
-
         if len(options) > 0:
-            option = options[r % len(options)]
+            option = random.choice(options)
             option.id = s_cell.id
             fill_left = fill_left - 1
             body.append(option)

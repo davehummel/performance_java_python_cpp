@@ -6,6 +6,7 @@ import seaborn as sns
 
 import grow as gr
 import trigrid as tg
+import solve as sv
 
 color_palette = sns.color_palette("pastel") + sns.color_palette('bright')
 
@@ -16,19 +17,19 @@ def get_color(i):
 
 def color_convert(color):
     # return f"#{int(255 * color[0]):02X}{int(255 * color[1]):02X}{int(255 * color[2]):02X}"
-    return (int(255 * color[0]),int(255 * color[1]),int(255 * color[2]))
-
+    return int(255 * color[0]), int(255 * color[1]), int(255 * color[2])
 
 
 tri_grid = None
+graph_model = None
 
 
 # The main window of the animation
 def create_main_window():
-    window = tk.Tk()
-    window.title("Coloring")
+    main_window = tk.Tk()
+    main_window.title("Coloring")
 
-    return window
+    return main_window
 
 
 def create_grow_controls(window):
@@ -63,9 +64,7 @@ def create_grow_controls(window):
     iter_limit_input.pack(side=tk.LEFT)
 
     def submit_action():
-        # global color_palette
-        # color_palette = sns.color_palette(n_colors=int(cell_count_input.get()))
-        grow_action(int(cell_count_input.get()), int(seed_count_input.get()),int(iter_limit_input.get()))
+        grow_action(int(cell_count_input.get()), int(seed_count_input.get()), int(iter_limit_input.get()))
 
     submit = tk.Button(input_row, text="grow",
                        command=submit_action)
@@ -79,7 +78,7 @@ def create_grow_controls(window):
 
 def create_grow_canvas(window):
     canvas = tk.Canvas(window, width=800, height=400, background="white")
-    canvas.bind("<Configure>", lambda c: render_grow_canvas(tri_grid, canvas))
+    canvas.bind("<Button-1>", lambda c: render_grow_canvas(tri_grid, canvas))
     canvas.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
     return canvas
 
@@ -136,10 +135,26 @@ def create_graph_controls(window):
                    pady=5)
 
 
+def render_graph_canvas(graph, canvas):
+    canvas.delete("all")
+    width = canvas.winfo_width() - 4
+    height = canvas.winfo_height() - 4
+
+    print(f"Rendering graph canvas at ({width},{height})")
+
+    if graph is None:
+        return
+
+    canvas.pil_image = Image.new(mode="RGB", size=(width, height), color="black")
+    canvas.tk_image = ImageTk.PhotoImage(canvas.pil_image)
+
+    canvas.create_image((2, 2), anchor=tk.NW, image=canvas.tk_image)
+
+
 def create_graph_canvas(window):
     canvas = tk.Canvas(window, width=800, height=400, background="#000000")
-    canvas.configure()
-    canvas.pack(side=tk.TOP, expand=False)
+    # canvas.bind("<Configure>", lambda c: render_graph_canvas(tri_grid, canvas))
+    canvas.pack(side=tk.TOP, expand=False, fill=tk.NONE)
     return canvas
 
 
@@ -150,15 +165,22 @@ def grow_action(side_length, seed_count, iter_limit):
     render_grow_canvas(tri_grid, grow_canvas)
 
 
+def graph_action():
+    global tri_grid
+    global graph_model
+    graph_model = sv.build_graph(tri_grid)
+    render_graph_canvas(graph_model, graph_canvas)
+
+
 if __name__ == '__main__':
     print("Initializing application")
-window = create_main_window()
-grow_frame = tk.LabelFrame(window, text="Generation")
-grow_frame.pack(side=tk.TOP, padx=3, pady=3, expand=True, fill=tk.BOTH)
-create_grow_controls(grow_frame)
-grow_canvas = create_grow_canvas(grow_frame)
-graph_frame = tk.LabelFrame(window, text="Graph Coloring")
-graph_frame.pack(side=tk.TOP, padx=3, pady=3)
-create_graph_controls(graph_frame)
-graph_canvas = create_graph_canvas(graph_frame)
-window.mainloop()
+    window = create_main_window()
+    grow_frame = tk.LabelFrame(window, text="Generation")
+    grow_frame.pack(side=tk.TOP, padx=3, pady=3, expand=True, fill=tk.BOTH)
+    create_grow_controls(grow_frame)
+    grow_canvas = create_grow_canvas(grow_frame)
+    graph_frame = tk.LabelFrame(window, text="Graph Coloring")
+    graph_frame.pack(side=tk.TOP, padx=3, pady=3, expand=False, fill=tk.NONE)
+    create_graph_controls(graph_frame)
+    graph_canvas = create_graph_canvas(graph_frame)
+    window.mainloop()

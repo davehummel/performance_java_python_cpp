@@ -32,3 +32,5 @@ pythonBenchmarks/cython/timeseries/forward_fill.html
 pythonBenchmarks/cython/timeseries/__pycache__/setup.cpython-39.pyc
 pythonBenchmarks/cython/timeseries/build/lib.linux-x86_64-3.9/forward_fill.cpython-39-x86_64-linux-gnu.so
 pythonBenchmarks/cython/timeseries/build/temp.linux-x86_64-3.9/forward_fill.o
+pythonBenchmarks/.idea/misc.xml
+pythonBenchmarks/.idea/pythonProject.iml

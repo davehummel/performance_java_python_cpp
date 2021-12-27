@@ -5,6 +5,8 @@ class TriCell:
     b = None
     c = None
 
+    state = None
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -67,6 +69,12 @@ class TriGrid:
             return None
 
         return self.grid_store[y][x]
+
+    def set_all(self,state):
+        for y in range(self.height):
+            for x in range(y * 2 + 1):
+                self.grid_store[y][x].state =state
+
 
     def find_cell_for_id(self, id: int):
         for row in self.grid_store:

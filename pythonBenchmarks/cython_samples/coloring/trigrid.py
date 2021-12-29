@@ -70,11 +70,10 @@ class TriGrid:
 
         return self.grid_store[y][x]
 
-    def set_all(self,state):
+    def set_all(self, state):
         for y in range(self.height):
             for x in range(y * 2 + 1):
-                self.grid_store[y][x].state =state
-
+                self.grid_store[y][x].state = state
 
     def find_cell_for_id(self, id: int):
         for row in self.grid_store:
@@ -99,3 +98,8 @@ class TriGrid:
                             adj[cell.c.id] = True
 
         return adj.keys()
+
+    def triangles(self):
+        for y in range(self.height):
+            for x in range(y * 2 + 1):
+                yield self.get(x, y)

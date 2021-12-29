@@ -59,7 +59,63 @@ def directional_color_map(grid: TriGrid):
     return mapping
 
 
-def find_3_color_hex(grid: TriGrid):
-    mapping = [[], [], []]
-    cell = grid.get(0, 0)
-    mapping[0].append(cell.id)
+def find_3_color_hexes(grid: TriGrid):
+    hexes = []
+    triangles = grid.triangles()
+    for triangle in triangles:
+        if triangle.x % 2 == 0:
+            continue
+        hex_triangles = [triangle.a, triangle.b]
+        if None in hex_triangles:
+            continue
+        hex_triangles.append(triangle.a.c)
+        hex_triangles.append(triangle.b.c)
+        if None in hex_triangles:
+            continue
+        hex_triangles.append(triangle.a.c.b)
+        ids = [triangle.id]
+        for hex_triangle in hex_triangles:
+            if hex_triangle.id not in ids:
+                ids.append(hex_triangle.id)
+
+        if len(ids) == 3:
+            hexes.append(triangle)
+            ids.sort()
+            triangle.state = ids
+            print(f"[{ids[0]},{ids[1]},{ids[2]}]" + str(triangle) + "V" + " ".join(str(ht) for ht in hex_triangles))
+
+    return hexes
+
+
+def find_2_color_linked_hexes(three_id_hexes):
+    unique_triples = {}
+    pair_match_map = {}
+    graph = nx.Graph()
+
+    for hex in three_id_hexes:
+        triplet = (hex.state[0], hex.state[1], hex.state[2])
+        out = unique_triples.get(triplet)
+        if out is None:
+            unique_triples[triplet] = [hex]
+        else:
+            out.append(hex)
+
+        pairs = ((triplet[0], triplet[1]), (triplet[0], triplet[2]), (triplet[1], triplet[2]))
+
+        for pair in pairs:
+            out = pair_match_map.get(pair)
+            if out is None:
+                pair_match_map[pair] = [triplet]
+            else:
+                out.append(triplet)
+
+
+    for (triplet, hex_list) in unique_triples.items():
+        graph.add_node(triplet, hex_list=hex_list)
+
+    for pair, triplets in pair_match_map.items():
+        for i in range(len(triplets)):
+            for j in range(i + 1, len(triplets)):
+                graph.add_edge(triplets[i], triplets[j], pair=pair)
+
+    return graph

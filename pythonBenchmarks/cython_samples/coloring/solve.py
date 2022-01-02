@@ -109,7 +109,6 @@ def find_2_color_linked_hexes(three_id_hexes):
             else:
                 out.append(triplet)
 
-
     for (triplet, hex_list) in unique_triples.items():
         graph.add_node(triplet, hex_list=hex_list)
 
@@ -119,3 +118,28 @@ def find_2_color_linked_hexes(three_id_hexes):
                 graph.add_edge(triplets[i], triplets[j], pair=pair)
 
     return graph
+
+
+def simple_coloring(three_id_hexes):
+    color_map = [[], [], [], []]
+
+    for hex in three_id_hexes:
+        reserved_list = [None] * 4
+        for id in hex.state:
+            for color_num in range(len(color_map)):
+                color_list = color_map[color_num]
+                if id in color_list:
+                    if reserved_list[color_num] is None:
+                        reserved_list[color_num] = id
+                    else:
+                        print(
+                            f"Coloring failed! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
+                    break
+
+        for id in hex.state:
+            if id not in reserved_list:
+                unused_i = reserved_list.index(None)
+                reserved_list[unused_i] = id
+                color_map[unused_i].append(id)
+
+    return color_map

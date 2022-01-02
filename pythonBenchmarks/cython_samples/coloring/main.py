@@ -5,10 +5,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-import numpy as np
-
-import seaborn as sns
 
 import grow as gr
 import trigrid as tg
@@ -16,7 +12,9 @@ import solve as sv
 
 matplotlib.use("TkAgg")
 
-color_palette = sns.color_palette("pastel") + sns.color_palette('bright')
+color_palette = [item for set in zip(plt.get_cmap("tab20b").colors, plt.get_cmap("tab20c").colors) for item in set]
+color_palette = [color_palette[i // 5 + i % 5 * 8] for i in range(40)]
+four_color_palette = [(255,0,0),(0,255,0),(0,0,255),(0,255,255)]
 
 
 def get_color(i):
@@ -32,6 +30,7 @@ tri_grid = None
 graph_model = None
 three_id_hexes = None
 hex_graph = None
+coloring_solution = None
 
 
 # The main window of the animation
@@ -39,6 +38,10 @@ def create_main_window():
     main_window = tk.Tk()
     main_window.title("Coloring")
 
+    def on_closing():
+        main_window.quit()
+
+    main_window.protocol("WM_DELETE_WINDOW", on_closing)
     return main_window
 
 
@@ -85,7 +88,7 @@ def create_grow_controls(window):
 
 
 def create_grow_canvas(window):
-    canvas = tk.Canvas(window, width=800, height=400, background="white")
+    canvas = tk.Canvas(window, width=800, height=600, background="white")
     canvas.bind("<Button-1>", lambda c: render_grow_canvas(tri_grid, three_id_hexes, canvas))
     canvas.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
     return canvas
@@ -132,7 +135,8 @@ def render_grow_canvas(grid, hexes, canvas):
                       x_start + x_step * (hex_top.x - 1) / 2, y_start + 2 * y_step,
                       x_start + x_step * (hex_top.x - 2) / 2, y_start + y_step]
             draw.polygon(coords, outline='black')
-            draw.text((x_start + x_step * (hex_top.x + 2) / 2, y_start + y_step), f"{hex_top.state[0]},{hex_top.state[1]},{hex_top.state[2]}", fill="black")
+            draw.text((x_start + x_step * (hex_top.x + 2) / 2, y_start + y_step),
+                      f"{hex_top.state[0]},{hex_top.state[1]},{hex_top.state[2]}", fill="black")
 
     canvas.tk_image = ImageTk.PhotoImage(canvas.pil_image)
     canvas.create_image((2, 2), anchor=tk.NW, image=canvas.tk_image)
@@ -145,7 +149,7 @@ def create_graph_controls(window):
     graph_submit.pack(side=tk.LEFT, padx=3)
 
     hex_submit = tk.Button(input_row, text="Find 3 hexes", command=hex_action)
-    hex_submit.pack(side=tk.CENTER, padx=3)
+    hex_submit.pack(side=tk.LEFT, padx=30)
 
     color_submit = tk.Button(input_row, text="Color", command=color_action)
     color_submit.pack(side=tk.RIGHT, padx=3)
@@ -159,6 +163,13 @@ def create_graph_controls(window):
 def render_graph_canvas(graph, model, canvas):
     fig = canvas.figure
     fig.clear()
+
+
+    colors = []
+    for i in range(len(graph.nodes)):
+        for c in range(4):
+            
+
     options = {
         "node_size": 400,
         "edgecolors": (.5, .5, .5, .5),
@@ -186,18 +197,18 @@ def render_hex_canvas(graph, canvas):
 
     ax2 = fig.add_subplot()
 
-    nx.draw_networkx_nodes(graph, pos, node_size = 400,  edgecolors= (.5, .5, .5, .5) , ax=ax2)
-    nx.draw_networkx_edges(graph, pos,  ax=ax2)
-    nx.draw_networkx_labels(graph, pos, font_size = 8,  ax=ax2)
+    nx.draw_networkx_nodes(graph, pos, node_size=600, node_color=[(.85, .9, 1)], edgecolors=(.5, .5, .5, .5), ax=ax2)
+    nx.draw_networkx_edges(graph, pos, edge_color=(.5, .5, .5, .5), ax=ax2)
+    nx.draw_networkx_labels(graph, pos, font_size=8, ax=ax2)
 
     plt.tight_layout(pad=.1)
     canvas.draw()
 
 
 def create_graph_canvas(window):
-    fig1 = plt.figure(figsize=(4, 4))
+    fig1 = plt.figure()
     canvas1 = FigureCanvasTkAgg(fig1, master=window)
-    fig2 = plt.figure(figsize=(4, 4))
+    fig2 = plt.figure()
     canvas2 = FigureCanvasTkAgg(fig2, master=window)
 
     canvas1.get_tk_widget().pack(side=tk.LEFT, expand=True, fill=tk.X)
@@ -210,11 +221,13 @@ def grow_action(side_length, seed_count, iter_limit):
     global graph_model
     global three_id_hexes
     global hex_graph
+    global render_solution
 
     tri_grid = tg.TriGrid(side_length)
     graph_model = None
     three_id_hexes = None
     hex_graph = None
+    render_solution = None
 
     gr.generate(seed_count, tri_grid, iter_limit)
     render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
@@ -243,18 +256,18 @@ def hex_action():
     hex_graph = sv.find_2_color_linked_hexes(three_id_hexes)
     render_hex_canvas(hex_graph, hex_canvas)
 
+
 def color_action():
     global tri_grid
     global graph_model
     global three_id_hexes
     global hex_graph
+    global coloring_solution
     if hex_graph is None:
         hex_action()
-    three_id_hexes = sv.find_3_color_hexes(tri_grid)
-    render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
 
-    hex_graph = sv.find_2_color_linked_hexes(three_id_hexes)
-    render_hex_canvas(hex_graph, hex_canvas)
+    coloring_solution = sv.simple_coloring(three_id_hexes)
+
 
 
 if __name__ == '__main__':

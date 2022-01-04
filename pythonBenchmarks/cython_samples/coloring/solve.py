@@ -87,18 +87,21 @@ def find_3_color_hexes(grid: TriGrid):
     return hexes
 
 
-def find_2_color_linked_hexes(three_id_hexes):
+def find_two_color_linked_hex_graph(three_id_hexes):
     unique_triples = {}
     pair_match_map = {}
     graph = nx.Graph()
 
     for hex in three_id_hexes:
         triplet = (hex.state[0], hex.state[1], hex.state[2])
+
         out = unique_triples.get(triplet)
         if out is None:
             unique_triples[triplet] = [hex]
         else:
             out.append(hex)
+            print(f"Dropping duplicate hex [{out}]<{hex}>")
+            continue
 
         pairs = ((triplet[0], triplet[1]), (triplet[0], triplet[2]), (triplet[1], triplet[2]))
 
@@ -120,10 +123,10 @@ def find_2_color_linked_hexes(three_id_hexes):
     return graph
 
 
-def simple_coloring(three_id_hexes):
+def simple_coloring(hex_graph: nx.Graph, three_id_hexes):
     color_map = [[], [], [], []]
 
-    for hex in three_id_hexes:
+    for hex in hex_graph.nodes:
         reserved_list = [None] * 4
         for id in hex.state:
             for color_num in range(len(color_map)):

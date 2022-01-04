@@ -14,11 +14,8 @@ matplotlib.use("TkAgg")
 
 color_palette = [item for set in zip(plt.get_cmap("tab20b").colors, plt.get_cmap("tab20c").colors) for item in set]
 color_palette = [color_palette[i // 5 + i % 5 * 8] for i in range(40)]
-four_color_palette = [(255,0,0),(0,255,0),(0,0,255),(0,255,255)]
+four_color_palette = [(1,0,0),(0,1,0),(0,0,1),(0,1,1)]
 
-
-def get_color(i):
-    return color_convert(color_palette[i])
 
 
 def color_convert(color):
@@ -101,6 +98,21 @@ def render_grow_canvas(grid, hexes, canvas):
 
     print(f"Rendering grow canvas at ({width},{height})")
 
+    if coloring_solution is None:
+        colors = color_palette[0:grid.seed_count()]
+    else:
+        colors = []
+        for i in range(grid.seed_count()):
+            found = False
+            for c in range(4):
+                if i in coloring_solution[c]:
+                    colors.append(four_color_palette[c])
+                    found = True
+                    break
+
+            if not found:
+                colors.append(color_palette[i])
+
     if grid is None:
         return
 
@@ -120,7 +132,7 @@ def render_grow_canvas(grid, hexes, canvas):
             else:
                 coords = [x_start + (i - 1) / 2 * x_step, j * y_step, x_start + (i + 1) / 2 * x_step, j * y_step,
                           x_start + i / 2 * x_step, (j + 1) * y_step]
-            draw.polygon(coords, fill='black' if tri_cell.id is None else get_color(tri_cell.id))
+            draw.polygon(coords, fill='black' if tri_cell.id is None else color_convert(colors[tri_cell.id]))
             # outline='black' if tri_cell.id is None else get_color(tri_cell.id))
 
     if hexes is not None:
@@ -161,21 +173,31 @@ def create_graph_controls(window):
 
 
 def render_graph_canvas(graph, model, canvas):
+    global coloring_solution
     fig = canvas.figure
     fig.clear()
 
+    if coloring_solution is None:
+        colors = color_palette[0:model.seed_count()]
+    else:
+        colors = []
+        for i in range(len(graph.nodes)):
+            found = False
+            for c in range(4):
+                if i in coloring_solution[c]:
+                    colors.append(four_color_palette[c])
+                    found = True
+                    break
 
-    colors = []
-    for i in range(len(graph.nodes)):
-        for c in range(4):
-            
+            if not found:
+                colors.append(color_palette[i])
 
     options = {
         "node_size": 400,
         "edgecolors": (.5, .5, .5, .5),
         "linewidths": 3,
         "width": 2,
-        "node_color": color_palette[0:model.seed_count()],
+        "node_color": colors,
         "font_size": 10,
         "font_color": "black",
         "with_labels": True,
@@ -221,13 +243,13 @@ def grow_action(side_length, seed_count, iter_limit):
     global graph_model
     global three_id_hexes
     global hex_graph
-    global render_solution
+    global coloring_solution
 
     tri_grid = tg.TriGrid(side_length)
     graph_model = None
     three_id_hexes = None
     hex_graph = None
-    render_solution = None
+    coloring_solution = None
 
     gr.generate(seed_count, tri_grid, iter_limit)
     render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
@@ -253,7 +275,7 @@ def hex_action():
     three_id_hexes = sv.find_3_color_hexes(tri_grid)
     render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
 
-    hex_graph = sv.find_2_color_linked_hexes(three_id_hexes)
+    hex_graph = sv.find_two_color_linked_hex_graph(three_id_hexes)
     render_hex_canvas(hex_graph, hex_canvas)
 
 
@@ -266,8 +288,10 @@ def color_action():
     if hex_graph is None:
         hex_action()
 
-    coloring_solution = sv.simple_coloring(three_id_hexes)
+    coloring_solution = sv.simple_coloring(hex_graph,three_id_hexes)
 
+    render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
+    render_graph_canvas(graph_model, tri_grid, graph_canvas)
 
 
 if __name__ == '__main__':

@@ -5,10 +5,11 @@ import time
 from trigrid import TriGrid
 
 
-def generate(seed_count: int, tri_grid: TriGrid, iter_limit=0):
-    if seed_count == 0:
+def generate(entity_count: int, tri_grid: TriGrid, iter_limit=0,rnd_seed=0):
+    if entity_count == 0:
         return
-    origins = seed(seed_count, tri_grid)
+    random.seed(rnd_seed)
+    origins = seed(entity_count, tri_grid)
     grow(origins, tri_grid, iter_limit)
 
 

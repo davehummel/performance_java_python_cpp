@@ -1,3 +1,5 @@
+import math
+import time
 import tkinter as tk
 import re
 from PIL import Image, ImageTk, ImageDraw
@@ -14,8 +16,7 @@ matplotlib.use("TkAgg")
 
 color_palette = [item for set in zip(plt.get_cmap("tab20b").colors, plt.get_cmap("tab20c").colors) for item in set]
 color_palette = [color_palette[i // 5 + i % 5 * 8] for i in range(40)]
-four_color_palette = [(1,0,0),(0,1,0),(0,0,1),(0,1,1)]
-
+four_color_palette = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0)]
 
 
 def color_convert(color):
@@ -57,15 +58,15 @@ def create_grow_controls(window):
 
     validate_command = input_row.register(whole_num_validate)
     cell_count_input = tk.Entry(input_row, width=12, validate="key", validatecommand=(validate_command, '%S'))
-    cell_count_input.insert(0, "40")
+    cell_count_input.insert(0, "100")
     cell_count_input.pack(side=tk.LEFT)
 
-    label = tk.Label(input_row, text="Seed count: ", anchor='e')
+    label = tk.Label(input_row, text="Entity count: ", anchor='e')
     label.pack(side=tk.LEFT, padx=5, )
 
-    seed_count_input = tk.Entry(input_row, width=16, validate="key", validatecommand=(validate_command, '%S'))
-    seed_count_input.insert(0, "8")
-    seed_count_input.pack(side=tk.LEFT)
+    entity_count_input = tk.Entry(input_row, width=16, validate="key", validatecommand=(validate_command, '%S'))
+    entity_count_input.insert(0, "12")
+    entity_count_input.pack(side=tk.LEFT)
 
     label = tk.Label(input_row, text="Iter limit: ", anchor='e')
     label.pack(side=tk.LEFT, padx=5, )
@@ -73,8 +74,24 @@ def create_grow_controls(window):
     iter_limit_input.insert(0, "0")
     iter_limit_input.pack(side=tk.LEFT)
 
+    label = tk.Label(input_row, text="Rnd Seed: ", anchor='e')
+    label.pack(side=tk.LEFT, padx=5, )
+
+    seed_input = tk.Entry(input_row, width=16)
+    seed_input.pack(side=tk.LEFT)
+
+    seed_text_rdonly = tk.StringVar()
+    label = tk.Entry(input_row, state='readonly', textvariable=seed_text_rdonly)
+    label.pack(side=tk.LEFT, padx=1)
+
     def submit_action():
-        grow_action(int(cell_count_input.get()), int(seed_count_input.get()), int(iter_limit_input.get()))
+        if len(seed_input.get()) == 0:
+            rnd_seed = math.floor(time.time() * 1000)
+        else:
+            rnd_seed = int(seed_input.get())
+        seed_text_rdonly.set(str(rnd_seed))
+
+        grow_action(int(cell_count_input.get()), int(entity_count_input.get()), int(iter_limit_input.get()), rnd_seed)
 
     submit = tk.Button(input_row, text="grow",
                        command=submit_action)
@@ -163,8 +180,17 @@ def create_graph_controls(window):
     hex_submit = tk.Button(input_row, text="Find 3 hexes", command=hex_action)
     hex_submit.pack(side=tk.LEFT, padx=30)
 
-    color_submit = tk.Button(input_row, text="Color", command=color_action)
+    algo_selection = tk.StringVar()
+
+    def submit_action():
+        color_action(algo_selection.get())
+
+    color_submit = tk.Button(input_row, text="Color", command=submit_action)
     color_submit.pack(side=tk.RIGHT, padx=3)
+    options = list(filter(lambda a: a.startswith("coloring"), dir(sv)))
+    algo_selection.set(options[0])
+    popupMenu = tk.OptionMenu(input_row, algo_selection, *options)
+    popupMenu.pack(side=tk.RIGHT, padx=3)
 
     input_row.pack(side=tk.TOP,
                    fill=tk.X,
@@ -238,7 +264,7 @@ def create_graph_canvas(window):
     return canvas1, canvas2
 
 
-def grow_action(side_length, seed_count, iter_limit):
+def grow_action(side_length, entity_count, iter_limit, seed):
     global tri_grid
     global graph_model
     global three_id_hexes
@@ -251,7 +277,7 @@ def grow_action(side_length, seed_count, iter_limit):
     hex_graph = None
     coloring_solution = None
 
-    gr.generate(seed_count, tri_grid, iter_limit)
+    gr.generate(entity_count, tri_grid, iter_limit, seed)
     render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
 
 
@@ -279,7 +305,7 @@ def hex_action():
     render_hex_canvas(hex_graph, hex_canvas)
 
 
-def color_action():
+def color_action(algo_name: str):
     global tri_grid
     global graph_model
     global three_id_hexes
@@ -288,7 +314,7 @@ def color_action():
     if hex_graph is None:
         hex_action()
 
-    coloring_solution = sv.simple_coloring(hex_graph,three_id_hexes)
+    coloring_solution = eval("sv." + algo_name + "(hex_graph)")
 
     render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
     render_graph_canvas(graph_model, tri_grid, graph_canvas)

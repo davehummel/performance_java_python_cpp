@@ -123,12 +123,52 @@ def find_two_color_linked_hex_graph(three_id_hexes):
     return graph
 
 
-def simple_coloring(hex_graph: nx.Graph, three_id_hexes):
-    color_map = [[], [], [], []]
+def depth_greedy_traverse_hex(hex_graph: nx.Graph, start_hexes: []):
+    traversed_set = {}
+    depth_stack = start_hexes
 
-    for hex in hex_graph.nodes:
+    while depth_stack:
+        current_hex = depth_stack.pop()
+        if current_hex in traversed_set:
+            continue
+        traversed_set[current_hex] = True
+        for next_hex in hex_graph.neighbors(current_hex):
+            if next_hex not in traversed_set:
+                depth_stack.append( next_hex)
+        yield current_hex
+
+
+def build_min_connected_nodes(hex_graph: nx.Graph) -> list:
+    start_hexes = []
+    start_level_hexes = []
+    min_n_count = 0
+    for cur_hex in hex_graph.nodes:
+        n_count = sum(1 for _ in hex_graph.neighbors(cur_hex))
+        if n_count == 0:
+            start_hexes.append(cur_hex)
+            continue
+
+        if min_n_count == 0 or n_count <= min_n_count:
+            if n_count < min_n_count:
+                start_level_hexes.clear()
+
+            min_n_count = n_count
+            start_level_hexes.append(cur_hex)
+
+    start_hexes.extend(start_level_hexes)
+
+    return start_hexes
+
+
+def coloring_simple(hex_graph: nx.Graph):
+    color_map = [[], [], [], []]
+    start_hexes = build_min_connected_nodes(hex_graph)
+
+    print(f"Starting hexes:{start_hexes}")
+
+    for cur_hex in depth_greedy_traverse_hex(hex_graph, start_hexes):
         reserved_list = [None] * 4
-        for id in hex.state:
+        for id in cur_hex:
             for color_num in range(len(color_map)):
                 color_list = color_map[color_num]
                 if id in color_list:
@@ -136,13 +176,62 @@ def simple_coloring(hex_graph: nx.Graph, three_id_hexes):
                         reserved_list[color_num] = id
                     else:
                         print(
-                            f"Coloring failed! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
+                            f"Coloring blocked (color #{color_num})! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
+                        color_list.remove(id)
+                        color_map[3].append(id)
+                        reserved_list[3] = id
+
                     break
 
-        for id in hex.state:
+        for id in cur_hex:
             if id not in reserved_list:
                 unused_i = reserved_list.index(None)
                 reserved_list[unused_i] = id
                 color_map[unused_i].append(id)
+
+        print(f"Coloring hex:{cur_hex}:{reserved_list}")
+
+    return color_map
+
+
+def coloring_odd_cycle_hex(hex_graph: nx.Graph):
+    color_map = [[], [], [], []]
+
+    start_hexes = build_min_connected_nodes(hex_graph)
+
+    alternate_coloring_hexes = {}
+    traversed_hexes = {}
+
+    for cur_hex in depth_greedy_traverse_hex(hex_graph, start_hexes):
+        is_alt_hex = cur_hex in alternate_coloring_hexes
+        traversed_hexes[cur_hex] = True
+        neighbors = hex_graph.neighbors()
+        filter(lambda a: a not in traversed_hexes, neighbors)
+
+        if len(neighbors) == 1: alternate_coloring_hexes[neighbors[0]] = True
+
+        reserved_list = [None] * 4
+        for id in cur_hex:
+            for color_num in range(len(color_map)):
+                color_list = color_map[color_num]
+                if id in color_list:
+                    if reserved_list[color_num] is None:
+                        reserved_list[color_num] = id
+                    else:
+                        print(
+                            f"Coloring blocked (color #{color_num})! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
+                        color_list.remove(id)
+                        color_map[3].append(id)
+                        reserved_list[3] = id
+
+                    break
+
+        for id in cur_hex:
+            if id not in reserved_list:
+                unused_i = reserved_list.index(None)
+                reserved_list[unused_i] = id
+                color_map[unused_i].append(id)
+
+        print(f"Coloring hex:{cur_hex}:{reserved_list}")
 
     return color_map

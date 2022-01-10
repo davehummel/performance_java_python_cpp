@@ -1,6 +1,6 @@
 import networkx as nx
 
-from cython_samples.coloring.trigrid import TriGrid
+from trigrid import TriGrid
 
 
 def build_graph(grid: TriGrid):
@@ -134,7 +134,7 @@ def depth_greedy_traverse_hex(hex_graph: nx.Graph, start_hexes: []):
         traversed_set[current_hex] = True
         for next_hex in hex_graph.neighbors(current_hex):
             if next_hex not in traversed_set:
-                depth_stack.append( next_hex)
+                depth_stack.append(next_hex)
         yield current_hex
 
 
@@ -194,44 +194,48 @@ def coloring_simple(hex_graph: nx.Graph):
     return color_map
 
 
+def build_adjacency_map(hex_graph: []) -> {int: [int]}:
+    pass
+
+
 def coloring_odd_cycle_hex(hex_graph: nx.Graph):
+    class Cycle:
+        def __init__(self, nx_cycle):
+            self.cycle = nx_cycle
+            self.size = len(self.cycle)
+            self.is_odd = self.size % 2 != 0
+            self.colors = []
+            for triple in self.cycle:
+                for color in triple:
+                    if color not in self.colors:
+                        self.colors.append(color)
+
+        def __repr__(self):
+            return str(self.cycle)
+
     color_map = [[], [], [], []]
 
-    start_hexes = build_min_connected_nodes(hex_graph)
+    cycles = [Cycle(x) for x in nx.minimum_cycle_basis(hex_graph)]
+    adjacency = build_adjacency_map(hex_graph.nodes())
 
-    alternate_coloring_hexes = {}
-    traversed_hexes = {}
+    color_cycle_map = {}
 
-    for cur_hex in depth_greedy_traverse_hex(hex_graph, start_hexes):
-        is_alt_hex = cur_hex in alternate_coloring_hexes
-        traversed_hexes[cur_hex] = True
-        neighbors = hex_graph.neighbors()
-        filter(lambda a: a not in traversed_hexes, neighbors)
+    for cycle in cycles:
+        for color in cycle.colors:
+            color_cycle_counts = color_cycle_map.get(color)
+            if color_cycle_counts is None:
+                color_cycle_counts = (int(not cycle.is_odd), int(cycle.is_odd))
+            else:
+                color_cycle_counts = (color_cycle_counts[0] + int(not cycle.is_odd),
+                                      color_cycle_counts[1] + int(cycle.is_odd))
+            color_cycle_map[color] = color_cycle_counts
 
-        if len(neighbors) == 1: alternate_coloring_hexes[neighbors[0]] = True
+    for cycle in cycles:
+        if cycle.is_odd:
+            eligible_colors = cycle.colors.copy()
+            eligible_colors = filter(lambda a: eligible_colors)
+    color_cycle_map[4]
 
-        reserved_list = [None] * 4
-        for id in cur_hex:
-            for color_num in range(len(color_map)):
-                color_list = color_map[color_num]
-                if id in color_list:
-                    if reserved_list[color_num] is None:
-                        reserved_list[color_num] = id
-                    else:
-                        print(
-                            f"Coloring blocked (color #{color_num})! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
-                        color_list.remove(id)
-                        color_map[3].append(id)
-                        reserved_list[3] = id
-
-                    break
-
-        for id in cur_hex:
-            if id not in reserved_list:
-                unused_i = reserved_list.index(None)
-                reserved_list[unused_i] = id
-                color_map[unused_i].append(id)
-
-        print(f"Coloring hex:{cur_hex}:{reserved_list}")
+    print(color_cycle_map)
 
     return color_map

@@ -219,12 +219,12 @@ def render_graph_canvas(graph, model, canvas):
                 colors.append(color_palette[i])
 
     options = {
-        "node_size": 400,
+        "node_size": 200,
         "edgecolors": (.5, .5, .5, .5),
         "linewidths": 3,
         "width": 2,
         "node_color": colors,
-        "font_size": 10,
+        "font_size": 7,
         "font_color": "black",
         "with_labels": True,
     }
@@ -245,9 +245,9 @@ def render_hex_canvas(graph, canvas):
 
     ax2 = fig.add_subplot()
 
-    nx.draw_networkx_nodes(graph, pos, node_size=600, node_color=[(.85, .9, 1)], edgecolors=(.5, .5, .5, .5), ax=ax2)
+    nx.draw_networkx_nodes(graph, pos, node_size=200, node_color=[(.85, .9, 1)], edgecolors=(.5, .5, .5, .5), ax=ax2)
     nx.draw_networkx_edges(graph, pos, edge_color=(.5, .5, .5, .5), ax=ax2)
-    nx.draw_networkx_labels(graph, pos, font_size=8, ax=ax2)
+    nx.draw_networkx_labels(graph, pos, font_size=6, ax=ax2)
 
     plt.tight_layout(pad=.1)
     canvas.draw()

@@ -160,8 +160,41 @@ def build_min_connected_nodes(hex_graph: nx.Graph) -> list:
     return start_hexes
 
 
-def coloring_simple(hex_graph: nx.Graph):
-    color_map = [[], [], [], []]
+class ColorMap:
+    def __init__(self):
+        self.cmap = ([], [], [], [])
+
+    def find(self, id: int) -> int:
+        for color_num in range(len(self.cmap)):
+            id_list = self.cmap[color_num]
+            if id in id_list:
+                return color_num
+        return None
+
+    def remove(self, id: int, color: int):
+        self.cmap[color].remove(id)
+
+    def add(self, id: int, target_colors: [int] = [0, 1, 2, 3], adjacent_ids: [int] = []) -> bool:
+        i = 0
+        for target in target_colors:
+            color_list = self.cmap[target]
+            has_adjacent = False
+            for adjacent_id in adjacent_ids:
+                if adjacent_id in color_list:
+                    has_adjacent = True
+                    break
+            if not has_adjacent:
+                color_list.append(id)
+                return i
+            i = i + 1
+
+        return -1
+
+
+def coloring_simple(hex_graph: nx.Graph, color_map=None):
+    if color_map is None:
+        color_map = ColorMap()
+
     start_hexes = build_min_connected_nodes(hex_graph)
 
     print(f"Starting hexes:{start_hexes}")
@@ -169,73 +202,80 @@ def coloring_simple(hex_graph: nx.Graph):
     for cur_hex in depth_greedy_traverse_hex(hex_graph, start_hexes):
         reserved_list = [None] * 4
         for id in cur_hex:
-            for color_num in range(len(color_map)):
-                color_list = color_map[color_num]
-                if id in color_list:
-                    if reserved_list[color_num] is None:
-                        reserved_list[color_num] = id
-                    else:
-                        print(
-                            f"Coloring blocked (color #{color_num})! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
-                        color_list.remove(id)
-                        color_map[3].append(id)
-                        reserved_list[3] = id
-
+            color_num = color_map.find(id)
+            if color_num is not None:
+                if reserved_list[color_num] is None:
+                    reserved_list[color_num] = id
+                else:
+                    print(
+                        f"Coloring blocked (color #{color_num})! Hex has forced color conflict between {id} and {reserved_list[color_num]}")
+                    color_map.remove(id, color_num)
+                    color_map.add(id, [3])
+                    reserved_list[3] = id
                     break
 
         for id in cur_hex:
             if id not in reserved_list:
                 unused_i = reserved_list.index(None)
                 reserved_list[unused_i] = id
-                color_map[unused_i].append(id)
+                color_map.add(id, [unused_i])
 
         print(f"Coloring hex:{cur_hex}:{reserved_list}")
 
-    return color_map
+    return color_map.cmap
 
 
-def build_adjacency_map(hex_graph: []) -> {int: [int]}:
-    pass
+def build_adjacency_map(node_list: []) -> {int: [int]}:
+    amap = {}
+    for triple in node_list:
+        for v in triple:
+            colors = amap.get(v)
+            if colors is None:
+                colors = [c for c in triple if c != v]
+                amap[v] = colors
+            else:
+                for c in triple:
+                    if not (c == v or c in colors):
+                        colors.append(c)
+
+    return amap
 
 
-def coloring_odd_cycle_hex(hex_graph: nx.Graph):
+def coloring_odd_cycle_hex(hex_graph: nx.Graph, color_map=None):
     class Cycle:
         def __init__(self, nx_cycle):
             self.cycle = nx_cycle
             self.size = len(self.cycle)
             self.is_odd = self.size % 2 != 0
-            self.colors = []
+            self.all_ids = []
+            core_ids = [x for x in self.cycle[0]]
             for triple in self.cycle:
-                for color in triple:
-                    if color not in self.colors:
-                        self.colors.append(color)
+                for id in triple:
+                    if id not in self.all_ids:
+                        self.all_ids.append(id)
+            for triple in self.cycle:
+                for id in core_ids:
+                    if id not in triple:
+                        core_ids.remove(id)
+                if len(core_ids) == 1:
+                    break
+            self.core_id = core_ids[0]
 
         def __repr__(self):
             return str(self.cycle)
 
-    color_map = [[], [], [], []]
+    if color_map is None:
+        color_map = ColorMap()
 
     cycles = [Cycle(x) for x in nx.minimum_cycle_basis(hex_graph)]
-    adjacency = build_adjacency_map(hex_graph.nodes())
-
-    color_cycle_map = {}
 
     for cycle in cycles:
-        for color in cycle.colors:
-            color_cycle_counts = color_cycle_map.get(color)
-            if color_cycle_counts is None:
-                color_cycle_counts = (int(not cycle.is_odd), int(cycle.is_odd))
-            else:
-                color_cycle_counts = (color_cycle_counts[0] + int(not cycle.is_odd),
-                                      color_cycle_counts[1] + int(cycle.is_odd))
-            color_cycle_map[color] = color_cycle_counts
+        result = color_map.add(cycle.core_id, adjacent_ids=cycle.all_ids)
+        print(f"looking at {cycle.core_id} with adj {cycle.all_ids}")
+        print(f"color {result} for cycle {cycle}")
+        if result == -1:
+            raise "Coloring Failed"
 
-    for cycle in cycles:
-        if cycle.is_odd:
-            eligible_colors = cycle.colors.copy()
-            eligible_colors = filter(lambda a: eligible_colors)
-    color_cycle_map[4]
+    # coloring_simple(hex_graph, color_map)
 
-    print(color_cycle_map)
-
-    return color_map
+    return color_map.cmap

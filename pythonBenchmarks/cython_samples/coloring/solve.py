@@ -1,3 +1,5 @@
+import sys
+
 import networkx as nx
 
 from trigrid import TriGrid
@@ -162,10 +164,11 @@ def build_min_connected_nodes(hex_graph: nx.Graph) -> list:
 
 class ColorMap:
     def __init__(self):
-        self.cmap = ([], [], [], [])
+        self.cmap = ([], [], [], [], [])
+        self.color_count = 4
 
     def find(self, id: int) -> int:
-        for color_num in range(len(self.cmap)):
+        for color_num in range(self.color_count):
             id_list = self.cmap[color_num]
             if id in id_list:
                 return color_num
@@ -189,6 +192,9 @@ class ColorMap:
             i = i + 1
 
         return -1
+
+    def fail(self, id:int):
+        self.cmap[self.color_count].append(id)
 
 
 def coloring_simple(hex_graph: nx.Graph, color_map=None):
@@ -268,14 +274,74 @@ def coloring_odd_cycle_hex(hex_graph: nx.Graph, color_map=None):
         color_map = ColorMap()
 
     cycles = [Cycle(x) for x in nx.minimum_cycle_basis(hex_graph)]
-
+    hex_map = {}
+    hex_stack = []
     for cycle in cycles:
+        for hex in cycle.cycle:
+            cycle_list = hex_map.get(hex)
+            if cycle_list is None:
+                cycle_list = [cycle]
+                hex_map[hex] = cycle_list
+            else:
+                cycle_list.append(cycle)
+
+    def get_largest_cycle(cycle_list):
+        while cycle_list:
+            largest_cycle = cycle_list[0]
+            for cycle in cycle_list[1:]:
+                if len(cycle.cycle) > len(largest_cycle.cycle):
+                    largest_cycle = cycle
+            yield largest_cycle
+
+
+    def process_cycle(cycle):
+        try:
+            cycles.remove(cycle)
+        except ValueError:
+            print(f"Double processing {cycle}")
+            return False
         result = color_map.add(cycle.core_id, adjacent_ids=cycle.all_ids)
         print(f"looking at {cycle.core_id} with adj {cycle.all_ids}")
         print(f"color {result} for cycle {cycle}")
         if result == -1:
-            raise "Coloring Failed"
+            print("Coloring Failed", file=sys.stderr)
+            color_map.fail(cycle.core_id)
+            failed_cycles.append(cycle)
+
+        empty_hex_list = []
+
+        for hex, cycle_list in hex_map.items():
+            try:
+                cycle_list.remove(cycle)
+                if len(cycle_list) == 0:
+                    empty_hex_list.append(hex)
+            except ValueError:
+                pass
+        for hex in empty_hex_list:
+            del hex_map[hex]
+        return True
+
+    failed_cycles = []
+
+    for next_cycle in get_largest_cycle(cycles):
+        cycle_stack = [next_cycle]
+        # while cycle_stack:
+            # next_cycle = cycle_stack.pop(0)
+        for next_cycle in get_largest_cycle(cycle_stack):
+            if process_cycle(next_cycle):
+                hex_stack.extend(next_cycle.cycle)
+                while hex_stack:
+                    hex = hex_stack.pop(0)
+                    if hex in hex_map:
+                        cycle_list = hex_map.get(hex)
+                        del hex_map[hex]
+                        cycle_stack.extend(cycle_list)
+            else:
+                cycle_stack.remove(next_cycle)
+
 
     # coloring_simple(hex_graph, color_map)
+
+    print(f"Failed cycles:{failed_cycles}", file=sys.stderr)
 
     return color_map.cmap

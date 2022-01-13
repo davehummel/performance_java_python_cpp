@@ -16,7 +16,7 @@ matplotlib.use("TkAgg")
 
 color_palette = [item for set in zip(plt.get_cmap("tab20b").colors, plt.get_cmap("tab20c").colors) for item in set]
 color_palette = [color_palette[i // 5 + i % 5 * 8] for i in range(40)]
-four_color_palette = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0)]
+four_color_palette = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0),(0,0,0)]
 
 
 def color_convert(color):
@@ -128,7 +128,7 @@ def render_grow_canvas(grid, hexes, canvas):
                     break
 
             if not found:
-                colors.append(color_palette[i])
+                colors.append(color_palette[i%len(color_palette)])
 
     if grid is None:
         return
@@ -149,7 +149,7 @@ def render_grow_canvas(grid, hexes, canvas):
             else:
                 coords = [x_start + (i - 1) / 2 * x_step, j * y_step, x_start + (i + 1) / 2 * x_step, j * y_step,
                           x_start + i / 2 * x_step, (j + 1) * y_step]
-            draw.polygon(coords, fill='black' if tri_cell.id is None else color_convert(colors[tri_cell.id]))
+            draw.polygon(coords, fill='black' if tri_cell.id is None else color_convert(colors[tri_cell.id%len(colors)]))
             # outline='black' if tri_cell.id is None else get_color(tri_cell.id))
 
     if hexes is not None:
@@ -189,8 +189,8 @@ def create_graph_controls(window):
     color_submit.pack(side=tk.RIGHT, padx=3)
     options = list(filter(lambda a: a.startswith("coloring"), dir(sv)))
     algo_selection.set(options[0])
-    popupMenu = tk.OptionMenu(input_row, algo_selection, *options)
-    popupMenu.pack(side=tk.RIGHT, padx=3)
+    popup_menu = tk.OptionMenu(input_row, algo_selection, *options)
+    popup_menu.pack(side=tk.RIGHT, padx=3)
 
     input_row.pack(side=tk.TOP,
                    fill=tk.X,
@@ -204,7 +204,7 @@ def render_graph_canvas(graph, model, canvas):
     fig.clear()
 
     if coloring_solution is None:
-        colors = color_palette[0:model.seed_count()]
+        colors = [ color_palette[a%len(color_palette)] for a in range(len(graph.nodes))]
     else:
         colors = []
         for i in range(len(graph.nodes)):
@@ -216,7 +216,7 @@ def render_graph_canvas(graph, model, canvas):
                     break
 
             if not found:
-                colors.append(color_palette[i])
+                colors.append(color_palette[i%len(color_palette)])
 
     options = {
         "node_size": 200,
@@ -256,8 +256,14 @@ def render_hex_canvas(graph, canvas):
 def create_graph_canvas(window):
     fig1 = plt.figure()
     canvas1 = FigureCanvasTkAgg(fig1, master=window)
+    def callback(event):
+        plt.show()
+    fig1.canvas.callbacks.connect('button_press_event', callback)
+
     fig2 = plt.figure()
     canvas2 = FigureCanvasTkAgg(fig2, master=window)
+
+    fig2.canvas.callbacks.connect('button_press_event', callback)
 
     canvas1.get_tk_widget().pack(side=tk.LEFT, expand=True, fill=tk.X)
     canvas2.get_tk_widget().pack(side=tk.RIGHT, expand=True, fill=tk.X)

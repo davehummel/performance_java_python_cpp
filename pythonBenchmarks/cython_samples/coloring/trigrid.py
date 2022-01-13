@@ -63,7 +63,7 @@ class TriGrid:
     def get(self, x: int, y: int):
         if x < 0 or y < 0:
             return None
-        if (y >= self.height):
+        if y >= self.height:
             return None
         if x >= y * 2 + 1:
             return None

@@ -16,7 +16,7 @@ matplotlib.use("TkAgg")
 
 color_palette = [item for set in zip(plt.get_cmap("tab20b").colors, plt.get_cmap("tab20c").colors) for item in set]
 color_palette = [color_palette[i // 5 + i % 5 * 8] for i in range(40)]
-four_color_palette = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0),(0,0,0)]
+four_color_palette = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (.9, .9, 1)]
 
 
 def color_convert(color):
@@ -121,19 +121,19 @@ def render_grow_canvas(grid, hexes, canvas):
         colors = []
         for i in range(grid.seed_count()):
             found = False
-            for c in range(4):
+            for c in range(len(coloring_solution)):
                 if i in coloring_solution[c]:
                     colors.append(four_color_palette[c])
                     found = True
                     break
 
             if not found:
-                colors.append(color_palette[i%len(color_palette)])
+                colors.append(color_palette[i % len(color_palette)])
 
     if grid is None:
         return
 
-    canvas.pil_image = Image.new(mode="RGB", size=(width, height), color="white")
+    canvas.pil_image = Image.new(mode="RGB", size=(width, height), color="black")
     draw = ImageDraw.Draw(canvas.pil_image)
 
     x_step = width / grid.height
@@ -149,8 +149,24 @@ def render_grow_canvas(grid, hexes, canvas):
             else:
                 coords = [x_start + (i - 1) / 2 * x_step, j * y_step, x_start + (i + 1) / 2 * x_step, j * y_step,
                           x_start + i / 2 * x_step, (j + 1) * y_step]
-            draw.polygon(coords, fill='black' if tri_cell.id is None else color_convert(colors[tri_cell.id%len(colors)]))
-            # outline='black' if tri_cell.id is None else get_color(tri_cell.id))
+
+            draw.polygon(coords, outline="white" if x_step > 10 else None,
+                         fill='black' if tri_cell.id is None else color_convert(colors[tri_cell.id % len(colors)]))
+    # draw boundry between countries
+    for j in range(grid.height):
+        x_start = width * ((grid.height - j) / (2 * grid.height))
+        for i in range(1, j * 2 + 1, 2):
+            tri_cell = grid.get(i, j)
+            if tri_cell.c is not None and tri_cell.c.id != tri_cell.id:
+                draw.line((x_start + (i - 1) / 2 * x_step, j * y_step, x_start + (i + 1) / 2 * x_step, j * y_step),
+                          fill="black")
+            if tri_cell.a is not None and tri_cell.a.id != tri_cell.id:
+                draw.line((x_start + (i - 1) / 2 * x_step, j * y_step, x_start + i / 2 * x_step, (j + 1) * y_step),
+                          fill="black")
+            if tri_cell.b is not None and tri_cell.b.id != tri_cell.id:
+                draw.line(
+                    (x_start + (i + 1) / 2 * x_step, j * y_step, x_start + i / 2 * x_step, (j + 1) * y_step),
+                    fill="black")
 
     if hexes is not None:
         for hex_top in hexes:
@@ -163,9 +179,9 @@ def render_grow_canvas(grid, hexes, canvas):
                       x_start + x_step * (hex_top.x + 1) / 2, y_start + 2 * y_step,
                       x_start + x_step * (hex_top.x - 1) / 2, y_start + 2 * y_step,
                       x_start + x_step * (hex_top.x - 2) / 2, y_start + y_step]
-            draw.polygon(coords, outline='black')
+            draw.polygon(coords, outline='grey')
             draw.text((x_start + x_step * (hex_top.x + 2) / 2, y_start + y_step),
-                      f"{hex_top.state[0]},{hex_top.state[1]},{hex_top.state[2]}", fill="black")
+                      f"{hex_top.state[0]},{hex_top.state[1]},{hex_top.state[2]}", fill="white")
 
     canvas.tk_image = ImageTk.PhotoImage(canvas.pil_image)
     canvas.create_image((2, 2), anchor=tk.NW, image=canvas.tk_image)
@@ -187,7 +203,7 @@ def create_graph_controls(window):
 
     color_submit = tk.Button(input_row, text="Color", command=submit_action)
     color_submit.pack(side=tk.RIGHT, padx=3)
-    options = list(filter(lambda a: a.startswith("coloring"), dir(sv)))
+    options = [x[9:] for x in filter(lambda a: a.startswith("coloring"), dir(sv))]
     algo_selection.set(options[0])
     popup_menu = tk.OptionMenu(input_row, algo_selection, *options)
     popup_menu.pack(side=tk.RIGHT, padx=3)
@@ -204,19 +220,19 @@ def render_graph_canvas(graph, model, canvas):
     fig.clear()
 
     if coloring_solution is None:
-        colors = [ color_palette[a%len(color_palette)] for a in range(len(graph.nodes))]
+        colors = [color_palette[a % len(color_palette)] for a in range(len(graph.nodes))]
     else:
         colors = []
         for i in range(len(graph.nodes)):
             found = False
-            for c in range(4):
+            for c in range(len(coloring_solution)):
                 if i in coloring_solution[c]:
                     colors.append(four_color_palette[c])
                     found = True
                     break
 
             if not found:
-                colors.append(color_palette[i%len(color_palette)])
+                colors.append(color_palette[i % len(color_palette)])
 
     options = {
         "node_size": 200,
@@ -256,8 +272,10 @@ def render_hex_canvas(graph, canvas):
 def create_graph_canvas(window):
     fig1 = plt.figure()
     canvas1 = FigureCanvasTkAgg(fig1, master=window)
+
     def callback(event):
         plt.show()
+
     fig1.canvas.callbacks.connect('button_press_event', callback)
 
     fig2 = plt.figure()
@@ -320,7 +338,7 @@ def color_action(algo_name: str):
     if hex_graph is None:
         hex_action()
 
-    coloring_solution = eval("sv." + algo_name + "(hex_graph)")
+    coloring_solution = eval("sv.coloring_" + algo_name + "(tri_grid,hex_graph)")
 
     render_grow_canvas(tri_grid, three_id_hexes, grow_canvas)
     render_graph_canvas(graph_model, tri_grid, graph_canvas)

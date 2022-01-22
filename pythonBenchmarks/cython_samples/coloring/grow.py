@@ -5,25 +5,58 @@ import time
 from trigrid import TriGrid
 
 
-def generate(entity_count: int, tri_grid: TriGrid, iter_limit=0,rnd_seed=0):
+def generate(entity_count: int, tri_grid: TriGrid, iter_limit=0, rnd_seed=0):
+    jj_mode = rnd_seed < 0
+
     if entity_count == 0:
         return
     random.seed(rnd_seed)
-    origins = seed(entity_count, tri_grid)
-    grow(origins, tri_grid, iter_limit)
+
+    if jj_mode:
+        inner_grid = TriGrid(tri_grid.height - 4)
+        origins = seed(entity_count, inner_grid)
+        grow(origins, inner_grid, iter_limit)
+        tri_grid.set_all_id(inner_grid.get(0, 0).id)
+        tri_grid._seed_count = inner_grid._seed_count
+        i = 0
+        j = 0
+        while True:
+            inner_tri = inner_grid.get(i, j)
+            if inner_tri is None:
+                j = j + 1
+                if j > inner_grid.height:
+                    break
+                i = 0
+            else:
+                tri_grid.get(i + 2, j + 2).id = inner_tri.id
+                i = i + 1
+    else:
+        origins = seed(entity_count, tri_grid)
+        grow(origins, tri_grid, iter_limit)
 
 
-def seed(count: int, tri_grid: TriGrid):
+def seed(seed_count: int, tri_grid: TriGrid):
     origins = []
-    if count == 0:
+    if seed_count == 0:
         return origins
 
-    for c in range(count):
-        r = random.randrange((tri_grid.height * 2 - 1) * tri_grid.height // 2)
+    cell_count = tri_grid.height * tri_grid.height
+
+    if seed_count > cell_count:
+        print(f"More seeds then cells.  Limiting seed count to {cell_count}")
+        seed_count = cell_count
+
+    exclusions = []
+    for c in range(seed_count):
+        while True:
+            r = random.randrange(cell_count)
+        if r not in exclusions:
+            break
+        exclusions.append(r)
         ry = 0
         rx = 0
         for ry in range(tri_grid.height):
-            r = r - ry * 2 + 1
+            r = r - (ry * 2 + 1)
             if r < 0:
                 rx = ry * 2 + 1 + r
                 break
@@ -33,14 +66,15 @@ def seed(count: int, tri_grid: TriGrid):
             cell.id = c
             origins.append(cell)
 
-    tri_grid._seed_count = count
+    tri_grid._seed_count = seed_count
+    tri_grid._seeds_ = list(range(seed_count))
 
     return origins
 
 
 def grow(origins, tri_grid, iter_limit=0):
     start = time.time()
-    fill_left = sum([v * 2 + 1 for v in range(tri_grid.height)])
+    fill_left = tri_grid.height * tri_grid.height
 
     fill_left = fill_left - len(origins)
 

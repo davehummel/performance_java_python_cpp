@@ -50,8 +50,8 @@ def seed(seed_count: int, tri_grid: TriGrid):
     for c in range(seed_count):
         while True:
             r = random.randrange(cell_count)
-        if r not in exclusions:
-            break
+            if r not in exclusions:
+                break
         exclusions.append(r)
         ry = 0
         rx = 0
@@ -96,9 +96,8 @@ def grow(origins, tri_grid, iter_limit=0):
                 if side.id is None:
                     options.append(side)
 
-        eval_side(s_cell.a)
-        eval_side(s_cell.c)
-        eval_side(s_cell.b)
+        for adj in s_cell.lrv():
+            eval_side(adj)
 
         if len(options) > 0:
             option = random.choice(options)

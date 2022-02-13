@@ -65,16 +65,16 @@ def find_3_color_hexes(grid: TriGrid):
     hexes = []
     triangles = grid.triangles()
     for triangle in triangles:
-        if triangle.x % 2 == 0:
+        if triangle.xy()[0] % 2 == 0:
             continue
-        hex_triangles = [triangle.a, triangle.b]
+        hex_triangles = [triangle._l, triangle._r]
         if None in hex_triangles:
             continue
-        hex_triangles.append(triangle.a.c)
-        hex_triangles.append(triangle.b.c)
+        hex_triangles.append(triangle._l._v)
+        hex_triangles.append(triangle._r._v)
         if None in hex_triangles:
             continue
-        hex_triangles.append(triangle.a.c.b)
+        hex_triangles.append(triangle._l._v._r)
         ids = [triangle.id]
         for hex_triangle in hex_triangles:
             if hex_triangle.id not in ids:
@@ -166,6 +166,14 @@ class ColorMap:
     def __init__(self):
         self.cmap = ([], [], [], [], [])
         self.color_count = 4
+        self._empty = True
+
+    def get_id_count(self):
+        i = 0
+        for lst in self.cmap:
+            i = i + len(lst)
+        return i
+
 
     def find(self, id: int) -> int:
         for color_num in range(self.color_count):
@@ -187,12 +195,17 @@ class ColorMap:
                     break
             if not has_adjacent:
                 color_list.append(id)
+                self._empty = False
                 return target
 
         return -1
 
     def fail(self, id: int):
+        self._empty = False
         self.cmap[self.color_count].append(id)
+
+    def is_empty(self):
+        return self._empty
 
 
 class Cycle:
@@ -471,32 +484,66 @@ def coloring_recursive_triangulation(tri_grid: TriGrid, hex_graph: nx.Graph, col
         raise Exception("Recursive triangulation cannot take existing color map")
     color_map = ColorMap()
 
-    def solve_constraints(constraint_list):
-        rel_nots = []
-        rel_eqs = []
-        abs_nots = []
-        abs_eq = None
+    def build_constraints(cell: TriCell):
+        nots = []
+        sames = []
         unconstrained = True
-        for adj in (self.a, self.b, self.c):
+        for adj in (cell.a, cell.b, cell.c):
             if adj is not None:
                 unconstrained = False
+                add_sames = False
+                add_nots = False
+                for id in cell.id:
+                    if id in adj.id and not add_sames:
+                        sames.append(adj)
+                        add_sames = True
+                    elif not add_nots:
+                        nots.append(adj)
+                        add_nots = True
+                    if add_sames and add_nots:
+                        break
 
         if unconstrained:
             return None
         else:
-            return (abs_eq,abs_nots,rel_eqs,rel_nots)
+            return nots, sames
 
+    def solve_constraints(ids: [int], constraints: []) -> {int, int}:
+        solution = {}
+        return solution
 
+    def find_first_coloring(cells: [TriCell]):
+        solution = {}
+        for cell in cells:
+            if len(cell.id) == 2:
+                solution[cell.id[0]] = 0
+                solution[cell.id[1]] = 1
+                return solution
 
-    def resolve(cell: TriCell):
-        if len(cell.id) == 1:
-            constraints = build_constraints(cell)
-            color = solve_constraints(constraints)
-            color_map.add(cell.id[0], [color])
-            cell.state = color
+        for cell in cells:
+            if len(cell.id) == 1:
+                solution[0] = [cell.id[0]]
+                return solution
+
+        return solution
+
+    def resolve(cells: [TriCell]):
+        if not color_map.is_empty():
+            constraints = [build_constraints(cell) for cell in cells]
+            solutions = solve_constraints(cell.id, constraints)
         else:
-            # Todo: subdivide
-            pass
+            solutions = find_first_coloring(cells)
+
+        for id, color in solutions.items():
+            color_map.add(id, [color])
+
+        if color_map.get_id_count() == tri_grid.seed_count():
+            print("Successful coloring!")
+            return
+
+        #subdivide and recurse
+
+
 
     div_size = tri_grid.height
 
@@ -507,8 +554,8 @@ def coloring_recursive_triangulation(tri_grid: TriGrid, hex_graph: nx.Graph, col
 
     tri_root = TriCell(0, 0)
     tri_root.id = list(range(tri_grid.seed_count()))
-    tri_root.state = tri_grid()
+    tri_root.state = tri_grid
 
-    resolve(tri_root)
+    resolve([tri_root])
 
     return color_map.cmap

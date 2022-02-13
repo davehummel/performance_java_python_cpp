@@ -1,9 +1,9 @@
 class TriCell:
     id = None
 
-    a = None
-    b = None
-    c = None
+    _l = None
+    _r = None
+    _v = None
 
     state = None
 
@@ -24,13 +24,16 @@ class TriCell:
             return f"<{self.id}|{self.__x + offset[0]:02},{self.__y + offset[1]:02}>"
 
     def adjacent(self, cell):
-        return self.a == cell or self.b == cell or self.c == cell
+        return self._l == cell or self._r == cell or self._v == cell
 
     def xy(self, offset: (int, int) = None):
         if offset is None:
             return self.__x, self.__y
         else:
             return self.__x + offset[0], self.__y + offset[1]
+
+    def lrv(self):
+        return self._l, self._r, self._v
 
 
 class TriGrid:
@@ -43,6 +46,7 @@ class TriGrid:
         self.height = height
         self.offset = offset
         self.up = up
+        self._seed_count = 0
 
         if view_source is None:
             if offset[0] != 0 or offset[1] != 0:
@@ -56,11 +60,11 @@ class TriGrid:
                 for cell in next_level:
                     cx, _ = cell.xy()
                     if cx > 0:
-                        cell.a = next_level[cx - 1]
-                        cell.a.b = cell
+                        cell._l = next_level[cx - 1]
+                        cell._l._r = cell
                     if cx % 2 == 1:
-                        cell.c = self.grid_store[-1][cx - 1]
-                        cell.c.c = cell
+                        cell._v = self.grid_store[-1][cx - 1]
+                        cell._v._v = cell
                 self.grid_store.append(next_level)
         else:
             if offset[1] + height > view_source.height:
@@ -68,7 +72,7 @@ class TriGrid:
                     f"height {height} + y offset {offset[1]} exceeds max height {view_source.height} of view_source")
 
             if up:
-                if offset[0] + height > view_source.get_row_width(offset[1] + height -1):
+                if offset[0] + height > view_source.get_row_width(offset[1] + height - 1):
                     raise ValueError(
                         f"width {height} + x offset {offset[0]} exceeds width at {view_source.get_row_width(offset[1] + height)}")
             else:
@@ -83,7 +87,7 @@ class TriGrid:
 
     def __str__(self):
         header = self.__repr__()
-        body = "\n".join(" ".join(str(tri) for tri in self.triangles()))
+        body = " ".join(str(tri) for tri in self.triangles())
 
         return header + "\n" + body
 
@@ -131,15 +135,15 @@ class TriGrid:
         adj = {}
         for cell in self.triangles():
             if cell.id == id:
-                if cell.a is not None:
-                    if cell.a.id != id:
-                        adj[cell.a.id] = True
-                if cell.b is not None:
-                    if cell.b.id != id:
-                        adj[cell.b.id] = True
-                if cell.c is not None:
-                    if cell.c.id != id:
-                        adj[cell.c.id] = True
+                if cell._l is not None:
+                    if cell._l.id != id:
+                        adj[cell._l.id] = True
+                if cell._r is not None:
+                    if cell._r.id != id:
+                        adj[cell._r.id] = True
+                if cell._v is not None:
+                    if cell._v.id != id:
+                        adj[cell._v.id] = True
 
         return adj.keys()
 
@@ -155,4 +159,11 @@ class TriGrid:
                 TriGrid(self.height // 2, up=True, view_source=self, offset=(0, self.height // 2)),
                 TriGrid(self.height // 2, up=False, view_source=self, offset=(1, self.height // 2)),
                 TriGrid(self.height // 2, up=True, view_source=self, offset=(self.height, self.height // 2)),
+            )
+        else:
+            return (
+                TriGrid(self.height // 2, up=False, view_source=self, offset=(0, 0)),
+                TriGrid(self.height // 2, up=True, view_source=self, offset=(self.height // 2, 0)),
+                TriGrid(self.height // 2, up=False, view_source=self, offset=(self.height // 2 + 1, 0)),
+                TriGrid(self.height // 2, up=False, view_source=self, offset=(0, self.height // 2)),
             )

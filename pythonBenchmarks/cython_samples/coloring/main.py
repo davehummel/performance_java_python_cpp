@@ -150,37 +150,38 @@ def render_grow_canvas(grid, hexes, canvas):
                 coords = [x_start + (i - 1) / 2 * x_step, j * y_step, x_start + (i + 1) / 2 * x_step, j * y_step,
                           x_start + i / 2 * x_step, (j + 1) * y_step]
 
-            draw.polygon(coords, outline="white" if x_step > 10 else None,
+            draw.polygon(coords, outline="grey" if x_step > 10 else None,
                          fill='black' if tri_cell.id is None else color_convert(colors[tri_cell.id % len(colors)]))
     # draw boundry between countries
     for j in range(grid.height):
         x_start = width * ((grid.height - j) / (2 * grid.height))
         for i in range(1, j * 2 + 1, 2):
             tri_cell = grid.get(i, j)
-            if tri_cell.c is not None and tri_cell.c.id != tri_cell.id:
+            l, r, v = tri_cell.lrv()
+            if v is not None and v.id != tri_cell.id:
                 draw.line((x_start + (i - 1) / 2 * x_step, j * y_step, x_start + (i + 1) / 2 * x_step, j * y_step),
                           fill="black")
-            if tri_cell.a is not None and tri_cell.a.id != tri_cell.id:
+            if l is not None and l.id != tri_cell.id:
                 draw.line((x_start + (i - 1) / 2 * x_step, j * y_step, x_start + i / 2 * x_step, (j + 1) * y_step),
                           fill="black")
-            if tri_cell.b is not None and tri_cell.b.id != tri_cell.id:
+            if r is not None and r.id != tri_cell.id:
                 draw.line(
                     (x_start + (i + 1) / 2 * x_step, j * y_step, x_start + i / 2 * x_step, (j + 1) * y_step),
                     fill="black")
 
     if hexes is not None:
         for hex_top in hexes:
-            hex_top
-            x_start = width * ((grid.height - hex_top.y) / (2 * grid.height))
-            y_start = hex_top.y * y_step
-            coords = [x_start + x_step * (hex_top.x - 1) / 2, y_start,
-                      x_start + x_step * (hex_top.x + 1) / 2, y_start,
-                      x_start + x_step * (hex_top.x + 2) / 2, y_start + y_step,
-                      x_start + x_step * (hex_top.x + 1) / 2, y_start + 2 * y_step,
-                      x_start + x_step * (hex_top.x - 1) / 2, y_start + 2 * y_step,
-                      x_start + x_step * (hex_top.x - 2) / 2, y_start + y_step]
-            draw.polygon(coords, outline='grey')
-            draw.text((x_start + x_step * (hex_top.x + 2) / 2, y_start + y_step),
+            hex_top_x, hex_top_y = hex_top.xy()
+            x_start = width * ((grid.height -  hex_top_y) / (2 * grid.height))
+            y_start = hex_top_y * y_step
+            coords = [x_start + x_step * (hex_top_x - 1) / 2, y_start,
+                      x_start + x_step * (hex_top_x + 1) / 2, y_start,
+                      x_start + x_step * (hex_top_x + 2) / 2, y_start + y_step,
+                      x_start + x_step * (hex_top_x+ 1) / 2, y_start + 2 * y_step,
+                      x_start + x_step * (hex_top_x - 1) / 2, y_start + 2 * y_step,
+                      x_start + x_step * (hex_top_x- 2) / 2, y_start + y_step]
+            draw.polygon(coords, outline='white')
+            draw.text((x_start + x_step * (hex_top_x + 2) / 2, y_start + y_step),
                       f"{hex_top.state[0]},{hex_top.state[1]},{hex_top.state[2]}", fill="white")
 
     canvas.tk_image = ImageTk.PhotoImage(canvas.pil_image)
